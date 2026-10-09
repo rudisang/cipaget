@@ -54,6 +54,11 @@ test('without a key the server answers only requests addressed to it locally, an
     assert.equal((await app.inject({url:'/healthz',headers:{host:'attacker.example'}})).statusCode,403);
     const crossSite=await search({host:'127.0.0.1:3000','sec-fetch-site':'cross-site'});assert.equal(crossSite.statusCode,403);assert.equal(crossSite.json().error.code,'CROSS_SITE_REQUEST');
     for(const site of ['same-origin','none'])assert.equal((await search({host:'127.0.0.1:3000','sec-fetch-site':site})).statusCode,200,site);
+    // Another local port is a different origin, and a browser that will not say where a request came from is not trusted.
+    assert.equal((await search({host:'127.0.0.1:3000','sec-fetch-site':'same-site'})).statusCode,403);
+    assert.equal((await search({host:'127.0.0.1:3000','user-agent':'Mozilla/5.0 (Macintosh) AppleWebKit/605.1.15 Safari/605.1.15'})).statusCode,403);
+    // Command-line and server-side clients send no such header and keep working.
+    assert.equal((await search({host:'127.0.0.1:3000','user-agent':'curl/8.7.1'})).statusCode,200);
     // Following a link to the documentation from another site is ordinary browsing.
     assert.equal((await app.inject({url:'/docs/',headers:{host:'127.0.0.1:3000','sec-fetch-site':'cross-site'}})).statusCode,200);
   } finally {await app.close();}

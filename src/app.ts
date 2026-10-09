@@ -38,7 +38,10 @@ export async function buildApp(config: Config = loadConfig(), provider?: Registr
     // Decide by the matched route, not the raw URL: the router decodes percent-encoding, so /%76%31/search is /v1/search.
     if (!request.routeOptions.url?.startsWith('/v1/')) return;
     // A lookup makes this server contact CIPA, so a page on another site must not be able to start one.
-    if (request.headers['sec-fetch-site'] === 'cross-site') throw new ApiError('CROSS_SITE_REQUEST','Requests from web pages on other sites are not accepted.',403);
+    // Current browsers say where a request came from. One that does not is refused rather than trusted;
+    // command-line and server-side clients send neither signal and are unaffected.
+    const site=request.headers['sec-fetch-site'], browser=site !== undefined || /^mozilla\//i.test(request.headers['user-agent'] ?? '');
+    if (browser && site !== 'same-origin' && site !== 'none') throw new ApiError('CROSS_SITE_REQUEST','Browser requests are accepted only from this server\'s own pages.',403);
     if (!config.apiKey) return;
     const supplied = Buffer.from(request.headers.authorization ?? ''), expected = Buffer.from(`Bearer ${config.apiKey}`);
     if (supplied.length !== expected.length || !timingSafeEqual(supplied,expected)) throw new ApiError('UNAUTHORIZED','A valid Bearer API key is required.',401);

@@ -688,7 +688,7 @@ for (const doc of data.documents) {
     <tbody>
       <tr><td>400</td><td><code>INVALID_REQUEST</code> and other <code>INVALID_…</code> codes, <code>PAGE_OUT_OF_RANGE</code>, <code>SEARCH_PAGE_LIMIT</code></td><td>A parameter is missing or out of range. The message says which.</td></tr>
       <tr><td>401</td><td><code>UNAUTHORIZED</code></td><td>The server has an API key and the request did not send it.</td></tr>
-      <tr><td>403</td><td><code>HOST_NOT_ALLOWED</code>, <code>CROSS_SITE_REQUEST</code></td><td>The server has no API key and was addressed by a name other than localhost, or the request came from a web page on another site.</td></tr>
+      <tr><td>403</td><td><code>HOST_NOT_ALLOWED</code>, <code>CROSS_SITE_REQUEST</code></td><td>The server has no API key and was addressed by a name other than localhost, or a browser sent the request from a page that is not the server's own.</td></tr>
       <tr><td>404</td><td><code>ENTITY_NOT_FOUND</code></td><td>CIPA's search returned no entity with that identifier.</td></tr>
       <tr><td>409</td><td><code>ENTITY_AMBIGUOUS</code></td><td>CIPA returned more than one business name for that number. Use search to tell them apart.</td></tr>
       <tr><td>429</td><td><code>RATE_LIMITED</code></td><td>Too many requests to this server in a minute.</td></tr>

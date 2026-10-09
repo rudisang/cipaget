@@ -189,7 +189,7 @@ Error responses are `{ error: { code, message, retryable, requestId } }`. Typica
 
 The server binds to loopback by default. Set `API_KEY` before using a non-loopback `HOST`, and send `Authorization: Bearer <key>` to `/v1/` routes. Use TLS at your reverse proxy. CORS is not enabled.
 
-A server without an API key is local-only: it answers requests whose `Host` is `localhost`, `127.0.0.1` or `[::1]`, plus any names listed in `ALLOWED_HOSTS`, and refuses the rest with `HOST_NOT_ALLOWED`. This stops a web page elsewhere from reaching it by pointing its own hostname at your machine. Lookups requested by a web page on another site are refused with `CROSS_SITE_REQUEST` whether or not a key is set. If you put a proxy in front of a keyless server, either set `API_KEY` or list the public hostname in `ALLOWED_HOSTS`. Logs contain route templates, status and duration, not company queries, returned personal data, or browser cookies.
+A server without an API key is local-only: it answers requests whose `Host` is `localhost`, `127.0.0.1` or `[::1]`, plus any names listed in `ALLOWED_HOSTS`, and refuses the rest with `HOST_NOT_ALLOWED`. This stops a web page elsewhere from reaching it by pointing its own hostname at your machine. Lookups sent by a browser from any page other than the server's own are refused with `CROSS_SITE_REQUEST`, whether or not a key is set; this includes old browsers that do not say where a request came from. Command-line and server-side clients are unaffected. If you put a proxy in front of a keyless server, either set `API_KEY` or list the public hostname in `ALLOWED_HOSTS`. Logs contain route templates, status and duration, not company queries, returned personal data, or browser cookies.
 
 ```sh
 docker build -t cipaget .
