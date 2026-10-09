@@ -1,0 +1,51 @@
+{
+  "name": "cipaget",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --import tsx src/server.ts",
+    "build": "tsc",
+    "start": "node --env-file-if-exists=.env dist/server.js",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "test:live": "node --env-file-if-exists=.env --import tsx scripts/smoke.ts",
+    "benchmark": "node --env-file-if-exists=.env --import tsx scripts/benchmark.ts",
+    "browser:install": "playwright install chromium"
+  },
+  "keywords": [],
+  "description": "On-demand browser-backed API for Botswana CIPA public register lookups",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "author": "Rudisang Morake",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rudisang/cipaget.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rudisang/cipaget/issues"
+  },
+  "homepage": "https://github.com/rudisang/cipaget#readme",
+  "dependencies": {
+    "@fastify/rate-limit": "11.2.0",
+    "@fastify/swagger": "9.8.1",
+    "cheerio": "1.2.0",
+    "fastify": "5.12.4",
+    "playwright": "1.63.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.2",
+    "tsx": "4.23.13",
+    "typescript": "7.0.2"
+  },
+  "private": true,
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

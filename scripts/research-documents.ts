@@ -1,0 +1,38 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { CipaBrowser } from '../src/browser.js';
+import { loadConfig } from '../src/config.js';
+const dir='output/playwright/documents';await mkdir(dir,{recursive:true});
+const browser=new CipaBrowser(loadConfig());const p=browser as any;
+try {
+ await browser.warmup(AbortSignal.timeout(30000));
+ const session=await p.acquire();const {page,context}=session;
+ const started=performance.now();const network:any[]=[];
+ page.on('requestfinished',async(request:any)=>{const r=await request.response();if(request.resourceType()==='xhr'||request.resourceType()==='fetch')network.push({t:Math.round(performance.now()-started),status:r?.status(),timing:request.timing(),method:request.method(),url:request.url(),commands:request.postData()});});
+ const uin=process.argv[2]??'BW00000790718';
+ const search=await p.searchOn(session,{q:uin,page:1,pageSize:20});
+ await page.getByRole('link',{name:`${search.items[0].name} (${uin})`,exact:true}).click();
+ await page.getByRole('heading',{name:'General Details',exact:true}).waitFor();await p.settle(session);
+ await writeFile(`${dir}/${uin}-initial.html`,await page.content());
+ await writeFile(`${dir}/${uin}-initial-state.json`,JSON.stringify(session.state));
+ console.log('Initial load ms',Math.round(performance.now()-started),'state nodes',Object.keys(session.state).length);
+ await page.getByRole('button',{name:'Certificates and Extracts',exact:true}).click();
+ console.log('Menu',await page.getByRole('menuitem').allTextContents());
+ const downloadPromise=page.waitForEvent('download');
+ await page.getByRole('menuitem',{name:'Download certificate',exact:true}).click();
+ const download=await downloadPromise;await download.saveAs(`${dir}/${uin}-certificate.pdf`);
+ console.log('Certificate',download.suggestedFilename(),await download.failure());
+ if(!await page.getByRole('menuitem',{name:'View standard extract',exact:true}).isVisible())await page.getByRole('button',{name:'Certificates and Extracts',exact:true}).click();
+ const previousUrl=page.url();
+ await Promise.all([page.waitForURL((url:URL)=>url.toString()!==previousUrl,{waitUntil:'domcontentloaded'}),page.getByRole('menuitem',{name:'View standard extract',exact:true}).click()]);
+ await page.getByRole('main').waitFor();
+ await p.settle(session,page.locator('body'));
+ console.log('After extract',await page.locator('body').innerText());
+ console.log('Pages',context.pages().map((p:any)=>p.url()));
+ const pdf=page.waitForEvent('download');
+ await page.getByRole('link',{name:'Download PDF',exact:true}).click();
+ const pdfDownload=await pdf;await pdfDownload.saveAs(`${dir}/${uin}-extract.pdf`);
+ console.log('Extract PDF',pdfDownload.suggestedFilename(),await pdfDownload.failure());
+ await writeFile(`${dir}/${uin}-extract.html`,await page.content());
+ await writeFile(`${dir}/${uin}-extract-state.json`,JSON.stringify(session.state));
+ await writeFile(`${dir}/${uin}-network.json`,JSON.stringify(network));
+} finally {await browser.close();}

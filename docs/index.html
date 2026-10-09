@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CIPAget API documentation</title>
+<meta name="description" content="How to search Botswana's public CIPA register and read company and business-name details through the CIPAget API.">
+<meta name="color-scheme" content="light dark">
+<script>
+  // Apply a saved theme before the first paint.
+  (function () { try { var saved = localStorage.getItem('cipaget-theme'); if (saved === 'light' || saved === 'dark') document.documentElement.setAttribute('data-theme', saved); } catch (blocked) {} })();
+</script>
+<style>
+  :root {
+    --bg: #FFFFFF; --surface: #F6F7F9; --border: #E5E7EB; --border-strong: #D3D8DF;
+    --text: #111827; --muted: #5A6675; --faint: #8791A0;
+    --accent: #1D6FBF; --accent-soft: #EAF3FC; --accent-text: #175FA5;
+    --button: #1D6FBF; --button-text: #FFFFFF;
+    --ok: #0B7A4B; --ok-soft: #E4F6EC; --warn: #8F5200; --warn-soft: #FFF3DC; --bad: #B42318; --bad-soft: #FDECEA;
+    --key: #175FA5; --string: #0B7A4B; --number: #9A4D00; --literal: #7C3AB8;
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --radius: 12px; --side: 264px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1217; --surface: #171B22; --border: #262C36; --border-strong: #363E4B;
+      --text: #E7EAEE; --muted: #9DA7B5; --faint: #707B8B;
+      --accent: #6DB3F2; --accent-soft: #14283B; --accent-text: #8CC4F6;
+      --button: #6DB3F2; --button-text: #0B1620;
+      --ok: #5FD39A; --ok-soft: #10291E; --warn: #F0B45B; --warn-soft: #2E220D; --bad: #F58E84; --bad-soft: #341715;
+      --key: #8CC4F6; --string: #7ED6A5; --number: #F0B45B; --literal: #C9A2F5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1217; --surface: #171B22; --border: #262C36; --border-strong: #363E4B;
+    --text: #E7EAEE; --muted: #9DA7B5; --faint: #707B8B;
+    --accent: #6DB3F2; --accent-soft: #14283B; --accent-text: #8CC4F6;
+    --button: #6DB3F2; --button-text: #0B1620;
+    --ok: #5FD39A; --ok-soft: #10291E; --warn: #F0B45B; --warn-soft: #2E220D; --bad: #F58E84; --bad-soft: #341715;
+    --key: #8CC4F6; --string: #7ED6A5; --number: #F0B45B; --literal: #C9A2F5;
+  }
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"] { color-scheme: dark; }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 400 15px/1.65 var(--font); -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent-text); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  code, pre, kbd { font-family: var(--mono); font-size: 0.87em; }
+  :not(pre) > code { padding: 0.1em 0.4em; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); overflow-wrap: anywhere; }
+  h1 { margin: 0 0 12px; font-size: 34px; line-height: 1.15; font-weight: 700; letter-spacing: -0.022em; }
+  h2 { margin: 0 0 12px; font-size: 24px; line-height: 1.2; font-weight: 700; letter-spacing: -0.016em; }
+  h3 { margin: 30px 0 10px; font-size: 16px; line-height: 1.35; font-weight: 650; scroll-margin-top: 24px; }
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 14px; padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+  .lede { color: var(--muted); font-size: 17px; line-height: 1.6; }
+  .hint { color: var(--muted); font-size: 13px; }
+
+  /* Sidebar */
+  .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; display: flex; flex-direction: column; width: var(--side); padding: 18px 12px 14px; border-right: 1px solid var(--border); background: var(--bg); overflow-y: auto; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 6px 10px 14px; color: var(--text); font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand:hover { text-decoration: none; }
+  /* The one nod to Botswana's flag: sky, white edge, black band. */
+  .mark { flex: none; width: 22px; height: 22px; border: 1px solid var(--border-strong); border-radius: 6px; background: linear-gradient(#75AADB 0 36%, #FFFFFF 36% 43%, #111111 43% 57%, #FFFFFF 57% 64%, #75AADB 64%); }
+  .version { margin-left: auto; padding: 0 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font: 500 12px/1.8 var(--mono); }
+  .nav-title { margin: 18px 10px 6px; color: var(--faint); font-size: 12px; font-weight: 600; }
+  .sidebar nav a { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; color: var(--muted); font-size: 14px; font-weight: 500; }
+  .sidebar nav a:hover { background: var(--surface); color: var(--text); text-decoration: none; }
+  .sidebar nav a[aria-current="true"] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+  .verb { flex: none; padding: 0 6px; border-radius: 5px; background: var(--ok-soft); color: var(--ok); font: 700 10.5px/1.75 var(--mono); letter-spacing: 0.02em; }
+  .sidebar-foot { margin-top: auto; padding: 18px 6px 2px; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  .seg button { padding: 5px 0; border: 0; border-radius: 7px; background: none; color: var(--muted); font: 500 13px var(--font); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--bg); color: var(--text); box-shadow: 0 0 0 1px var(--border-strong); }
+  .foot-link { display: block; margin-top: 10px; padding: 0 4px; color: var(--muted); font-size: 13px; }
+  .topbar, .scrim { display: none; }
+
+  /* Page */
+  main { margin-left: var(--side); padding: 44px clamp(20px, 4vw, 56px) 120px; }
+  main > section { max-width: 1160px; margin: 0 auto; padding-top: 56px; }
+  main > section:first-child { padding-top: 0; }
+  main > section + section { margin-top: 56px; border-top: 1px solid var(--border); }
+  .doc > * { max-width: 760px; }
+  .doc > .wide { max-width: none; }
+  .split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  @media (min-width: 1360px) {
+    .split { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 40px; align-items: start; }
+    .tryit { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; }
+    .tryit .body pre { max-height: none; }
+  }
+  footer { max-width: 1160px; margin: 56px auto 0; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13.5px; }
+
+  /* Cards */
+  .card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 0 0 18px; }
+  @media (min-width: 720px) { .cards.pairs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .cards .card { display: flex; flex-direction: column; gap: 6px; padding: 16px; color: var(--text); }
+  .cards a.card:hover { border-color: var(--accent); text-decoration: none; }
+  .cards .card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+  .cards .card strong { font-weight: 650; }
+  .card-route { display: flex; align-items: center; gap: 8px; }
+  .card-route code, .route code, .urlbar code, .params dt code { padding: 0; border: 0; background: none; }
+  .card-route code { min-width: 0; color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+  .time { margin-top: auto; padding-top: 8px; color: var(--faint); font: 500 12.5px var(--mono); }
+  .base { display: flex; align-items: center; gap: 12px; margin: 0 0 40px; padding: 10px 12px 10px 16px; }
+  .base span { color: var(--muted); font-size: 13px; font-weight: 600; }
+  .base code { flex: 1; min-width: 0; padding: 0; border: 0; background: none; font-size: 14px; overflow-wrap: anywhere; }
+  .pad { padding: 16px; }
+
+  /* Reference pieces */
+  .route { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; padding: 9px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font: 500 14px var(--mono); overflow-wrap: anywhere; }
+  .params { margin: 0 0 18px; border: 1px solid var(--border); border-radius: var(--radius); }
+  .params > div { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .params > div:last-child { border-bottom: 0; }
+  .params dt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 3px; }
+  .params dt code { font-size: 14px; font-weight: 600; }
+  .params dd { margin: 0; color: var(--muted); font-size: 14px; }
+  .type { color: var(--faint); font: 500 12.5px var(--mono); }
+  .tag { padding: 0 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--muted); font: 500 11.5px/1.75 var(--mono); }
+  .tag.required { border-color: transparent; background: var(--warn-soft); color: var(--warn); font-family: var(--font); font-weight: 600; }
+  .limits { margin: 0 0 18px; padding: 16px 18px; background: var(--surface); }
+  .limits h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 15px; }
+  .limits h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+  .limits ul { margin: 0; padding-left: 18px; font-size: 14.5px; }
+  .limits li:last-child { margin-bottom: 0; }
+  .note { margin: 0 0 18px; padding: 12px 16px; border-radius: 10px; background: var(--warn-soft); font-size: 14.5px; }
+  .note.bad { background: var(--bad-soft); }
+  .note p { margin: 0 0 6px; }
+  .note p:last-child { margin-bottom: 0; }
+  .table { margin: 0 0 18px; border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+  thead th { background: var(--surface); color: var(--muted); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  tbody tr:last-child > * { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td code { white-space: nowrap; }
+  .better { color: var(--ok); font-weight: 600; }
+  pre { position: relative; margin: 0 0 18px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow-x: auto; line-height: 1.6; tab-size: 2; }
+  pre code { font-size: 13px; }
+  .ghost { padding: 3px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--muted); font: 500 12px/1.5 var(--font); text-decoration: none; cursor: pointer; }
+  .ghost:hover { border-color: var(--border-strong); color: var(--text); text-decoration: none; }
+  pre > .ghost { position: absolute; top: 8px; right: 8px; }
+  .k, .j-key { color: var(--key); } .n { color: var(--faint); }
+  .j-string { color: var(--string); } .j-number { color: var(--number); } .j-literal { color: var(--literal); }
+
+  /* Try it */
+  .tryit { overflow: hidden; }
+  .tryit form { padding: 16px; }
+  .tryit-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 14px; }
+  .tryit-head h3 { margin: 0; font-size: 15px; }
+  .field { margin-bottom: 12px; }
+  .field > label, .field > legend { display: block; margin-bottom: 5px; padding: 0; font-size: 13px; font-weight: 600; }
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0 12px; }
+  input[type="text"], input[type="number"], input[type="password"], select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--bg); color: var(--text); font: 500 13.5px/1.4 var(--mono); }
+  input:focus-visible, select:focus-visible { outline-offset: 0; border-color: var(--accent); }
+  .field .hint { margin-top: 5px; }
+  .picks { display: flex; flex-wrap: wrap; gap: 6px; }
+  .picks label { position: relative; cursor: pointer; }
+  .picks input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+  .picks span { display: block; padding: 2px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font: 500 12.5px/1.7 var(--mono); }
+  .picks input:checked + span { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); }
+  .picks input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .picks button { padding: 2px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--muted); font: 500 12.5px/1.7 var(--mono); cursor: pointer; }
+  .picks button:hover { border-color: var(--accent); color: var(--accent-text); }
+  .check { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; font-size: 13.5px; line-height: 1.4; cursor: pointer; }
+  .check input { flex: none; width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--accent); }
+  .urlbar { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 5px 5px 5px 10px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); }
+  .urlbar code { flex: 1; min-width: 0; overflow: hidden; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+  .send { flex: none; padding: 7px 14px; border: 0; border-radius: 7px; background: var(--button); color: var(--button-text); font: 600 13.5px/1.4 var(--font); cursor: pointer; }
+  .send:hover:not(:disabled) { filter: brightness(1.1); }
+  .send:disabled { opacity: 0.55; cursor: default; }
+  .panel { border-top: 1px solid var(--border); }
+  .panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px 0; }
+  .panel-title { margin-right: auto; font-size: 13px; font-weight: 650; }
+  .tabs { display: flex; gap: 2px; }
+  .tabs button { padding: 3px 10px; border: 0; border-radius: 7px; background: none; color: var(--muted); font: 500 12.5px/1.6 var(--font); cursor: pointer; }
+  .tabs button:hover { color: var(--text); }
+  .tabs button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px 0; }
+  .pill { padding: 0 9px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--muted); font: 500 12px/1.8 var(--mono); }
+  .pill.ok { border-color: transparent; background: var(--ok-soft); color: var(--ok); font-weight: 700; }
+  .pill.bad { border-color: transparent; background: var(--bad-soft); color: var(--bad); font-weight: 700; }
+  .pill.warn { border-color: transparent; background: var(--warn-soft); color: var(--warn); font-weight: 700; }
+  .body { margin: 10px 16px 16px; }
+  .body pre { margin: 0; max-height: 520px; overflow: auto; }
+  .body > .hint { margin: 0; }
+  .body pre.wrap { padding-right: 16px; }
+  .body pre.wrap code { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .scroll { overflow-x: auto; }
+
+  /* Preview of an answer */
+  .entries { margin: 0; padding: 0; list-style: none; }
+  .entries > li { margin: 0; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .entries > li:first-child { padding-top: 0; }
+  .entries > li:last-child { border-bottom: 0; }
+  .entry-name { margin: 0; font-size: 14.5px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
+  .entry-meta { display: flex; flex-wrap: wrap; gap: 0 12px; margin-top: 3px; color: var(--muted); font: 500 12px/1.7 var(--mono); overflow-wrap: anywhere; }
+  .entry-line { margin: 4px 0 0; color: var(--muted); font-size: 13.5px; overflow-wrap: anywhere; }
+  .entries details { margin-top: 4px; font-size: 13px; }
+  .entries summary { color: var(--accent-text); cursor: pointer; }
+  .entries details ul { margin: 4px 0 0; color: var(--muted); }
+  .entries .ghost { display: inline-block; margin-top: 8px; }
+  .sheet-name { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+  .preview > .entry-meta { margin-bottom: 12px; }
+  .preview > .ghost { margin-bottom: 4px; }
+  .part { margin-top: 8px; border: 1px solid var(--border); border-radius: 10px; }
+  .part > summary { padding: 8px 12px; font-size: 13.5px; cursor: pointer; }
+  .part[open] > summary { border-bottom: 1px solid var(--border); }
+  .part > :not(summary) { margin: 10px 12px; }
+  .part-name { margin-right: 6px; font-weight: 650; }
+  .part-facts { margin-left: 6px; color: var(--muted); font-size: 12.5px; }
+  .preview table { font-size: 13px; }
+  .preview th, .preview td { padding: 6px 10px 6px 0; }
+  .preview thead th { background: none; }
+  .kv th { width: 38%; color: var(--muted); font-weight: 500; }
+  .kv td { overflow-wrap: anywhere; }
+  .kv .group th { padding-top: 12px; color: var(--text); font-weight: 650; }
+  .kv .none { color: var(--faint); font-style: italic; }
+  .records { margin: 0; padding: 0; list-style: none; }
+  .records > li { margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .records > li:last-child { margin-bottom: 0; border-bottom: 0; }
+  .record-title { margin: 0; font-size: 13.5px; font-weight: 650; overflow-wrap: anywhere; }
+  .record-line { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .record-title .tag { margin-left: 4px; font-weight: 500; }
+  .plain-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13.5px; }
+  .header-list { margin: 0; font: 500 12.5px/1.7 var(--mono); }
+  .header-list div { display: flex; gap: 10px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .header-list div:last-child { border-bottom: 0; }
+  .header-list dt { flex: 0 0 42%; color: var(--key); overflow-wrap: anywhere; }
+  .header-list dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+  @media (max-width: 899px) {
+    .topbar { position: sticky; top: 0; z-index: 25; display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid var(--border); background: var(--bg); font-weight: 700; }
+    .topbar button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); cursor: pointer; }
+    .sidebar { transform: translateX(-100%); transition: transform 0.18s ease; }
+    .nav-open .sidebar { transform: none; }
+    .nav-open .scrim { position: fixed; inset: 0; z-index: 28; display: block; background: rgba(0, 0, 0, 0.4); }
+    main { margin-left: 0; padding-top: 28px; }
+    main > section, h3 { scroll-margin-top: 64px; }
+    h1 { font-size: 28px; }
+  }
+  @media (max-width: 899px) and (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" id="menu" aria-label="Open the menu" aria-expanded="false" aria-controls="sidebar">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+  </button>
+  <span class="mark" aria-hidden="true"></span> CIPAget
+</header>
+<div class="scrim" id="scrim"></div>
+
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="#overview"><span class="mark" aria-hidden="true"></span>CIPAget<span class="version">v0.1.0</span></a>
+  <nav aria-label="Documentation">
+    <p class="nav-title">Get started</p>
+    <a href="#overview">Overview</a>
+    <a href="#quickstart">Quickstart</a>
+    <a href="#limits">Limits</a>
+    <p class="nav-title">Endpoints</p>
+    <a href="#search"><span class="verb">GET</span>Search the register</a>
+    <a href="#entity"><span class="verb">GET</span>Read an entity</a>
+    <a href="#documents"><span class="verb">GET</span>Download documents</a>
+    <a href="#health"><span class="verb">GET</span>Check the server</a>
+    <p class="nav-title">Reference</p>
+    <a href="#response">Response format</a>
+    <a href="#types">Entity types</a>
+    <a href="#errors">Errors</a>
+    <a href="#speed">Speed</a>
+    <a href="#settings">Settings</a>
+    <a href="#how">How it works</a>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="seg" role="group" aria-label="Theme">
+      <button type="button" data-theme-choice="auto">Auto</button>
+      <button type="button" data-theme-choice="light">Light</button>
+      <button type="button" data-theme-choice="dark">Dark</button>
+    </div>
+    <a class="foot-link" id="openapi-link" href="/openapi.json">OpenAPI JSON</a>
+    <a class="foot-link" href="https://github.com/rudisang/cipaget">Source on GitHub</a>
+  </div>
+</aside>
+
+<main>
+
+<section id="overview" class="doc">
+  <h1>CIPAget API</h1>
+  <p class="lede">Search Botswana's public CIPA register and read a company's or business name's details as JSON. Each call opens CIPA's own public search in a headless browser and reads what the page shows.</p>
+  <div class="base card">
+    <span>Base URL</span>
+    <code id="base-url">http://127.0.0.1:3000</code>
+    <button type="button" class="ghost" id="base-copy">Copy</button>
+  </div>
+
+  <h2>What you can ask for</h2>
+  <p>CIPAget answers five requests. The first three read CIPA's public website while you wait. The other two only report on this server and never contact CIPA.</p>
+  <div class="cards pairs">
+    <a class="card" href="#search">
+      <span class="card-route"><span class="verb">GET</span><code>/v1/search</code></span>
+      <strong>Search the register</strong>
+      <p>Finds companies and business names by name or number.</p>
+      <span class="time">Usually 0.4 to 2 s</span>
+    </a>
+    <a class="card" href="#entity">
+      <span class="card-route"><span class="verb">GET</span><code>/v1/entities/:id</code></span>
+      <strong>Read an entity</strong>
+      <p>Reads what CIPA shows publicly about one company or business name: its details, addresses, people, owners and filings.</p>
+      <span class="time">Usually 2 to 7 s</span>
+    </a>
+    <a class="card" href="#documents">
+      <span class="card-route"><span class="verb">GET</span><code>/v1/entities/:id/documents</code></span>
+      <strong>Download documents</strong>
+      <p>Downloads that entity's certificate and standard extract as PDFs.</p>
+      <span class="time">Usually 10 to 20 s</span>
+    </a>
+    <a class="card" href="#health">
+      <span class="card-route"><span class="verb">GET</span><code>/healthz</code></span>
+      <strong>Check the server</strong>
+      <p>Says whether this server is running and how busy it is. Never contacts CIPA.</p>
+      <span class="time">Instant</span>
+    </a>
+  </div>
+  <p>The fifth, <code>GET /openapi.json</code>, describes the API in a format that tools such as Postman can import.</p>
+</section>
+
+<section id="quickstart" class="doc">
+  <h2>Quickstart</h2>
+  <p>To run your own copy you need Node.js 20.19 or newer. The first three commands are one-time setup.</p>
+  <pre><code>npm ci
+npm run browser:install   <span class="n"># skip if .env sets BROWSER_CHANNEL=chrome</span>
+cp .env.example .env
+npm run dev               <span class="n"># or: npm run build &amp;&amp; npm start</span></code></pre>
+  <p>The server prepares its browser before it starts listening, which takes roughly 10 to 20 seconds. After that:</p>
+  <div class="table"><table>
+    <thead><tr><th>Address</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><code>http://127.0.0.1:3000/v1/…</code></td><td>The API described on this page</td></tr>
+      <tr><td><code>http://127.0.0.1:3000/docs/</code></td><td>This page. Opened from the server, its Try it panels send real requests.</td></tr>
+      <tr><td><code>http://127.0.0.1:3000/openapi.json</code></td><td>OpenAPI description for generating clients</td></tr>
+      <tr><td><code>http://127.0.0.1:3000/healthz</code></td><td>Queue, cache and browser counters. It never calls CIPA.</td></tr>
+    </tbody>
+  </table></div>
+  <p>If another app already uses port 3000, set <code>PORT</code> in <code>.env</code>. By default the server listens only on localhost. To make it reachable from elsewhere, set <code>HOST</code> and an <code>API_KEY</code>; clients then send <code>Authorization: Bearer &lt;key&gt;</code>.</p>
+
+  <h3>Sending requests from this page</h3>
+  <p id="c-note"></p>
+  <div class="card pad">
+    <div class="field" id="c-base-wrap">
+      <label for="b-base">Server address, used in the code samples</label>
+      <input type="text" id="b-base" value="http://127.0.0.1:3000" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="field" id="c-key-wrap" style="margin-bottom: 0">
+      <label for="c-key">API key</label>
+      <input type="password" id="c-key" autocomplete="off" aria-describedby="c-key-hint">
+      <div class="hint" id="c-key-hint">Leave this empty unless the server sets <code>API_KEY</code>. The key stays in this tab and is never saved.</div>
+    </div>
+  </div>
+</section>
+
+<section id="limits" class="doc">
+  <h2>Limits on every request</h2>
+  <p>These apply whichever request you send. Each endpoint below lists its own limits as well.</p>
+  <div class="cards wide">
+    <div class="card"><strong>Only what CIPA shows</strong><p>CIPAget is not an official service and holds no data of its own. If CIPA's site is down, slow or wrong, so is the answer.</p></div>
+    <div class="card"><strong>One entity at a time</strong><p>It cannot list the register, export it in bulk, or follow links from one company to another.</p></div>
+    <div class="card"><strong>Answers are reused for five minutes</strong><p>Ask the same thing again within that time and you get the stored answer, marked <code>meta.cache: "hit"</code>. A single request cannot skip this. Set <code>CACHE_TTL_MS=0</code> to turn it off for the whole server. Incomplete answers and errors are never stored.</p></div>
+    <div class="card"><strong>Requests wait their turn</strong><p>Unless you change the settings, one detail read, one search and one document download run at a time. Up to 20 more wait in each line for at most 30 seconds, then fail with a 503.</p></div>
+    <div class="card"><strong>60 requests a minute</strong><p>Past that, the server answers 429 until the minute is over.</p></div>
+    <div class="card"><strong>If CIPA refuses, everything pauses</strong><p>When CIPA limits or blocks the browser session, all lookups stop for 60 seconds.</p></div>
+    <div class="card"><strong>A key may be required</strong><p>The operator can require an API key, sent as <code>Authorization: Bearer &lt;key&gt;</code>. A server that listens on anything other than localhost must have one. Web pages on other sites cannot call it from a browser.</p></div>
+  </div>
+</section>
+
+<section id="search">
+  <div class="split">
+    <div>
+      <h2>Search the register</h2>
+      <div class="route"><span class="verb">GET</span>/v1/search</div>
+      <p>You give it a name, part of a name, or a number. CIPAget types that into the “Name or number” box on CIPA's site, presses Search, and returns the results as JSON: each one's name, number, status, type, registration date and address, plus any earlier names and addresses CIPA lists.</p>
+      <p>Use it to find a company's number, called its UIN. The other two requests need that number. A live search takes about one second.</p>
+
+      <h3>Parameters</h3>
+      <dl class="params">
+        <div><dt><code>q</code><span class="type">string</span><span class="tag required">required</span></dt><dd>2 to 200 characters: a name, a company UIN such as <code>BW00001142508</code>, or a business-name number such as <code>BN2019/11223</code>.</dd></div>
+        <div><dt><code>page</code><span class="type">integer</span><span class="tag">default 1</span></dt><dd>Which page of results to return, 1 to 20.</dd></div>
+        <div><dt><code>pageSize</code><span class="type">integer</span><span class="tag">default 20</span></dt><dd>Results per page: 20, 50 or 100.</dd></div>
+      </dl>
+
+      <div class="limits card">
+        <h3>Limits</h3>
+        <ul>
+          <li>You can search by name or number only. There are no filters for type, status or date.</li>
+          <li>Results come 20, 50 or 100 to a page, and no further than page 20. A very common word can fail with <code>SEARCH_PAGE_LIMIT</code>; use a narrower one.</li>
+          <li><code>total</code> is often null, because CIPA does not always say how many results there are. Use <code>hasMore</code> to know whether another page exists.</li>
+          <li>Business names come back without a number (<code>uin</code> is null), so their details cannot be opened from a search result.</li>
+          <li>Finding nothing is a normal answer with an empty list, not an error.</li>
+        </ul>
+      </div>
+
+      <h3>One result</h3>
+      <p>Each item in <code>data.items</code> looks like this:</p>
+      <pre><code>{
+  <span class="k">"uin"</span>: "BW00000877524",
+  <span class="k">"name"</span>: "Letshego Africa Holdings Limited",
+  <span class="k">"status"</span>: "Registered",
+  <span class="k">"register"</span>: "Companies",
+  <span class="k">"entityType"</span>: "Public company",
+  <span class="k">"registeredOn"</span>: "1998-03-04",
+  <span class="k">"address"</span>: "Tower C, Zambezi Towers, Plot 54352, Central Business District, Gaborone, Botswana",
+  <span class="k">"previousNames"</span>: [
+    "Letshego Holdings Limited (04 March 1998 - 17 April 2023)",
+    "Letshego Africa Holdings Limited (18 April 2023 - 07 May 2023)",
+    "Letshego Holdings Limited (08 May 2023 - 06 September 2023)"
+  ],
+  <span class="k">"previousAddresses"</span>: [
+    "2nd Floor Letshego Place, Plot 22, Khama Crescent, The Mall, Gaborone, Botswana (04 March 1998 - 09 January 2022)"
+  ],
+  <span class="k">"fields"</span>: [ … ],
+  <span class="k">"text"</span>: "…"
+}</code></pre>
+      <p>Alongside <code>items</code> you get <code>page</code>, <code>pageSize</code>, <code>hasMore</code>, <code>total</code>, <code>sourcePagesFetched</code> and <code>warnings</code>.</p>
+
+      <h3>When a search field is null</h3>
+      <p>A null here means CIPA's result card does not show that detail. It is not a failed read.</p>
+      <ul>
+        <li><strong>Business names</strong> appear with <code>uin: null</code> and <code>entityType: null</code>. CIPA never prints a business name's number on its public pages.</li>
+        <li><strong>Removed or cancelled entities</strong> often have <code>address: null</code> because the card lists no address.</li>
+        <li><code>total</code> is null when CIPA does not state a count, or when repeated results were removed across its pages. Use <code>hasMore</code> to page.</li>
+      </ul>
+    </div>
+
+    <aside class="tryit card" aria-label="Try the search request">
+      <form id="s-form">
+        <div class="tryit-head"><h3>Try it</h3><span class="hint"></span></div>
+        <div class="field">
+          <label for="s-q">q</label>
+          <input type="text" id="s-q" value="Choppies" required minlength="2" maxlength="200" spellcheck="false" autocomplete="off">
+          <div class="picks hint"><button type="button" data-fill="Letshego">Letshego</button><button type="button" data-fill="Sefalana">Sefalana</button><button type="button" data-fill="BW00000790718">BW00000790718</button></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="s-page">page</label><input type="number" id="s-page" value="1" min="1" max="20" step="1" required></div>
+          <div class="field"><label for="s-size">pageSize</label><select id="s-size"><option>20</option><option>50</option><option>100</option></select></div>
+        </div>
+        <div class="urlbar"><span class="verb">GET</span><code></code><button type="submit" class="send">Send request</button></div>
+      </form>
+      <div id="s-io"></div>
+    </aside>
+  </div>
+</section>
+
+<section id="entity">
+  <div class="split">
+    <div>
+      <h2>Read an entity</h2>
+      <div class="route"><span class="verb">GET</span>/v1/entities/:id</div>
+      <p>You give it one number. CIPAget opens that company or business name on CIPA's site, clicks through its tabs, and returns what each tab shows: general details, addresses, directors, secretaries, shareholders, share allocations, beneficial owners, auditors, the data behind the ownership diagram, and the list of filings.</p>
+      <p>Unless you say otherwise it also opens the “show previous” lists, so you get former directors, old addresses and earlier names too.</p>
+
+      <h3>Parameters</h3>
+      <dl class="params">
+        <div><dt><code>id</code><span class="type">string</span><span class="tag required">required</span></dt><dd>In the path. A company UIN (<code>BW</code> followed by 5 to 20 digits, for example <code>BW00000790718</code>), or a business-name registration number (<code>BN</code>, the year, a slash and a number, for example <code>BN2019/11223</code>). In a URL, write the slash as <code>%2F</code>.</dd></div>
+        <div><dt><code>include</code><span class="type">string</span><span class="tag">default all</span></dt><dd>Section keys separated by commas, or <code>all</code> on its own. Fewer sections means a faster call.</dd></div>
+        <div><dt><code>history</code><span class="type">boolean</span><span class="tag">default true</span></dt><dd>Also open the “show previous…” lists: former directors, old addresses, earlier names and statuses.</dd></div>
+        <div><dt><code>filingDetails</code><span class="type">boolean</span><span class="tag">default false</span></dt><dd>Open each filing's own dialog as well. Much slower.</dd></div>
+        <div><dt><code>maxPages</code><span class="type">integer</span><span class="tag">default 10</span></dt><dd>Most pages to read in any one list, 1 to 20.</dd></div>
+      </dl>
+
+      <div class="limits card">
+        <h3>Limits</h3>
+        <ul>
+          <li>It needs the exact number, not a name. Search first to find a company's UIN.</li>
+          <li>Reading everything takes 2.5 to 7 seconds, and longer for companies with long histories. Ask for fewer sections to make it faster.</li>
+          <li>Each list is read for at most <code>maxPages</code> pages: 10 unless you change it, and never more than 20. When a list is longer, <code>complete</code> is false and <code>warnings</code> names the section that stopped early.</li>
+          <li>Ownership data covers the entity's direct owners only. Companies that own it, or that it owns, are not opened.</li>
+          <li>The filings section is a list of what was filed and when. It does not contain the filed papers.</li>
+          <li>It cannot read anything CIPA hides from the public. A tab CIPA restricts comes back with status <code>restricted</code>.</li>
+          <li>PDFs are not part of this answer. They have <a href="#documents">their own request</a>.</li>
+        </ul>
+      </div>
+      <div class="note"><p><strong>Check <code>complete</code>.</strong> When it is <code>false</code>, a page limit was reached or a section could not be read, and <code>warnings</code> says which one. An incomplete answer is never stored in the cache.</p></div>
+      <p>The shape of the answer is described under <a href="#response">Response format</a>, and the section keys each kind of entity has under <a href="#types">Entity types</a>.</p>
+    </div>
+
+    <aside class="tryit card" id="entity-try" aria-label="Try the entity request">
+      <form id="builder">
+        <div class="tryit-head"><h3>Try it</h3><span class="hint">Every section of a large company can take 5 to 7 seconds.</span></div>
+        <div class="field">
+          <label for="b-id">id</label>
+          <input type="text" id="b-id" value="BW00000790718" required pattern="[Bb][Ww][0-9]{5,20}|[Bb][Nn][0-9]{4}/[0-9]{1,10}" title="BW followed by 5 to 20 digits, or BN, a year, a slash and a number" spellcheck="false" autocomplete="off" aria-describedby="b-id-hint">
+          <div class="hint" id="b-id-hint" role="status"></div>
+        </div>
+        <fieldset class="field">
+          <legend>include <span class="hint">(none picked means all)</span></legend>
+          <div class="picks" id="b-sections"></div>
+        </fieldset>
+        <label class="check"><input type="checkbox" id="b-history" checked> <span><b>history</b>: previous names, addresses and office holders</span></label>
+        <label class="check"><input type="checkbox" id="b-details"> <span><b>filingDetails</b>: open each filing's dialog (slow)</span></label>
+        <div class="field" style="max-width: 9rem"><label for="b-pages">maxPages</label><input type="number" id="b-pages" value="10" min="1" max="20" step="1" required></div>
+        <div class="urlbar"><span class="verb">GET</span><code></code><button type="submit" class="send">Send request</button></div>
+      </form>
+      <div id="b-io"></div>
+    </aside>
+  </div>
+</section>
+
+<section id="documents">
+  <div class="split">
+    <div>
+      <h2>Download documents</h2>
+      <div class="route"><span class="verb">GET</span>/v1/entities/:id/documents</div>
+      <p>CIPA offers two free PDFs for an entity: its certificate (<code>incorporationCertificate</code>) and a standard extract (<code>standardExtract</code>). This request asks CIPA for both and returns them inside the JSON.</p>
+      <p>Each file arrives as base64 text in <code>contentBase64</code>, with its <code>filename</code>, its size in <code>sizeBytes</code> and a <code>sha256</code> hash. Decode the text and you have the original PDF, byte for byte.</p>
+
+      <h3>Parameters</h3>
+      <dl class="params">
+        <div><dt><code>id</code><span class="type">string</span><span class="tag required">required</span></dt><dd>In the path. The same company UIN or business-name number that <a href="#entity">Read an entity</a> takes.</dd></div>
+      </dl>
+
+      <div class="limits card">
+        <h3>Limits</h3>
+        <ul>
+          <li>It is slow. CIPA builds the PDFs when asked, so expect 10 to 20 seconds. The request gives up after 180 seconds.</li>
+          <li>Only these two free documents. CIPAget never buys a document, never logs in and never uses “Email PDF”.</li>
+          <li>One document request runs at a time. Others wait their turn.</li>
+          <li>Each PDF can be at most 10 MiB.</li>
+          <li>A document CIPA does not offer comes back with status <code>unavailable</code> and no content. If one download fails, the other is still returned and <code>complete</code> is false.</li>
+          <li>The answer is large: base64 text is about a third bigger than the file itself.</li>
+          <li>The hash shows the bytes arrived intact. It does not prove the document is genuine.</li>
+        </ul>
+      </div>
+
+      <h3>Saving the files in your own code</h3>
+      <pre><code>const res = await fetch('http://127.0.0.1:3000/v1/entities/BW00000790718/documents');
+const { data } = await res.json();
+for (const doc of data.documents) {
+  if (doc.status === 'available') {
+    await fs.writeFile(doc.filename, Buffer.from(doc.contentBase64, 'base64'));
+  }
+}</code></pre>
+      <p>This request runs on its own browser and its own waiting line, so it never holds up searches or detail reads.</p>
+    </div>
+
+    <aside class="tryit card" aria-label="Try the documents request">
+      <form id="d-form">
+        <div class="tryit-head"><h3>Try it</h3><span class="hint">Usually 10 to 20 seconds.</span></div>
+        <div class="field">
+          <label for="d-id">id</label>
+          <input type="text" id="d-id" value="BW00000790718" required pattern="[Bb][Ww][0-9]{5,20}|[Bb][Nn][0-9]{4}/[0-9]{1,10}" title="BW followed by 5 to 20 digits, or BN, a year, a slash and a number" spellcheck="false" autocomplete="off" aria-describedby="d-hint">
+          <div class="hint" id="d-hint" role="status"></div>
+        </div>
+        <div class="urlbar"><span class="verb">GET</span><code></code><button type="submit" class="send">Send request</button></div>
+      </form>
+      <div id="d-io"></div>
+    </aside>
+  </div>
+</section>
+
+<section id="health">
+  <div class="split">
+    <div>
+      <h2>Check the server</h2>
+      <div class="route"><span class="verb">GET</span>/healthz</div>
+      <p>Tells you the server is running, how many lookups are running or waiting, how many answers are stored, and whether lookups are paused after a refusal by CIPA.</p>
+      <div class="table"><table>
+        <thead><tr><th>Property</th><th>What it means</th></tr></thead>
+        <tbody>
+          <tr><td><code>active</code>, <code>queued</code>, <code>concurrency</code></td><td>Detail reads running now, waiting, and allowed at once. <code>search</code> and <code>documents</code> hold the same three numbers for their own lines.</td></tr>
+          <tr><td><code>cache</code></td><td>How many answers are stored, and their size in bytes</td></tr>
+          <tr><td><code>cooldownMs</code></td><td>Milliseconds left in the pause after CIPA refused a session. Zero means no pause.</td></tr>
+          <tr><td><code>transport</code></td><td>Counters for how pages were opened. Useful when reporting a problem.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="limits card">
+        <h3>Limits</h3>
+        <ul>
+          <li>It never contacts CIPA, so it cannot tell you whether CIPA's own site is up.</li>
+          <li>It needs no API key, and it shows no company data.</li>
+        </ul>
+      </div>
+    </div>
+
+    <aside class="tryit card" aria-label="Try the server check">
+      <form id="h-form">
+        <div class="tryit-head"><h3>Try it</h3><span class="hint"></span></div>
+        <div class="urlbar"><span class="verb">GET</span><code></code><button type="submit" class="send">Send request</button></div>
+      </form>
+      <div id="h-io"></div>
+    </aside>
+  </div>
+</section>
+
+<section id="response" class="doc">
+  <h2>Response format</h2>
+  <p>Every successful response is <code>{ data, meta }</code>. <code>meta.cache</code> is <code>miss</code> for a fresh read from CIPA, <code>hit</code> for a stored answer and <code>coalesced</code> when an identical request was already running. <code>meta.durationMs</code> is how long the call took.</p>
+  <pre><code>{
+  <span class="k">"data"</span>: {
+    <span class="k">"uin"</span>: "BW00000790718",
+    <span class="k">"name"</span>: "Sefalana Cash &amp; Carry Limited",
+    <span class="k">"status"</span>: "Registered",
+    <span class="k">"entityType"</span>: "Public company",
+    <span class="k">"availableSections"</span>: [ { "key": "general", "label": "General Details" }, … ],
+    <span class="k">"sections"</span>: { "general": { … }, "addresses": { … }, "directors": { … }, … },
+    <span class="k">"complete"</span>: true,
+    <span class="k">"warnings"</span>: [],
+    <span class="k">"retrievedAt"</span>: "2026-10-03T02:42:17.348Z",
+    <span class="k">"source"</span>: "https://www.cipa.co.bw/master/ui/start/CIPARegisterSearch"
+  },
+  <span class="k">"meta"</span>: { "cache": "miss", "ageMs": 0, "durationMs": 4249 }
+}</code></pre>
+
+  <h3>A section</h3>
+  <div class="table"><table>
+    <thead><tr><th>Property</th><th>What it holds</th></tr></thead>
+    <tbody>
+      <tr><td><code>status</code></td><td><code>available</code>, <code>empty</code> (CIPA says there is nothing, such as “No auditors added yet”), <code>unavailable</code> (this entity has no such tab), <code>restricted</code> or <code>error</code></td></tr>
+      <tr><td><code>fields</code></td><td>Every labelled value on the tab, in page order</td></tr>
+      <tr><td><code>records</code></td><td>People and organisations, each with its own fields</td></tr>
+      <tr><td><code>tables</code></td><td>Tables as <code>headers</code> and <code>rows</code>: share allocations, filing history</td></tr>
+      <tr><td><code>text</code></td><td>The tab's visible text, for anything that is not a labelled field</td></tr>
+      <tr><td><code>ownershipStatements</code></td><td>On <code>visualisation</code> only: the ownership data behind CIPA's diagram, in the open BODS 0.3 format</td></tr>
+      <tr><td><code>filingDetails</code></td><td>Only with <code>filingDetails=true</code></td></tr>
+      <tr><td><code>pagesFetched</code>, <code>total</code>, <code>complete</code>, <code>warnings</code></td><td>How much of the tab was read</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>A field</h3>
+  <pre><code>{ <span class="k">"key"</span>: "registeredOfficeAddress",
+  <span class="k">"label"</span>: "Registered Office Address",
+  <span class="k">"value"</span>: "Plot 203, Independence Avenue, Gaborone, Botswana (Effective from 15 September 2025)",
+  <span class="k">"displayValue"</span>: "Plot 203, Independence Avenue, Gaborone, Botswana (Effective from 15 September 2025)" }
+
+{ <span class="k">"key"</span>: "previousRegisteredOfficeAddress",
+  <span class="k">"label"</span>: "Registered Office Address",
+  <span class="k">"value"</span>: "Grant Thornton Business Services, Plot 50370, Acumen Park, Fairgrounds, Gaborone, Botswana (Effective from 12 October 1973 to 14 September 2025)",
+  <span class="k">"displayValue"</span>: "…",
+  <span class="k">"group"</span>: "Previous Addresses" }</code></pre>
+  <ul>
+    <li><code>value</code> is null only when CIPA shows a placeholder such as “Not specified”. <code>displayValue</code> always keeps the exact text from the page. Zero and “No” are real values and stay as they are.</li>
+    <li><code>group</code> is the sub-heading the field sits under on the page: “Previous Addresses”, “Previous Statuses”, “Company Details”, “Interests”, “Shareholder Nominator Details” and so on.</li>
+    <li>Old values get their own keys that start with <code>previous</code>, such as <code>previousCompanyStatus</code>, <code>previousPostalAddress</code> and <code>previousCompanyName</code>. A current value is never overwritten by an old one.</li>
+    <li><code>machineValue</code> appears where CIPA supplies a plain value behind the display text, such as <code>"20330000"</code> for “20,330,000” or <code>"BW"</code> for “Botswana”.</li>
+  </ul>
+
+  <h3>A record</h3>
+  <pre><code>{ <span class="k">"title"</span>: "Deloitte Consulting Proprietary Limited (BW00000543030)",
+  <span class="k">"summary"</span>: [ "Plot 64518 Deloitte House, Fairgrounds, Gaborone, Botswana" ],
+  <span class="k">"group"</span>: "Previous Auditors",
+  <span class="k">"fields"</span>: [ … ],
+  <span class="k">"text"</span>: "…" }</code></pre>
+  <ul>
+    <li><code>group</code> is null for someone on the current list and names the list otherwise: “Previous Directors”, “Previous Shareholders”, “Previous Auditors”. To count current directors, keep the records whose <code>group</code> is null.</li>
+    <li><code>summary</code> holds the lines CIPA prints under the name, such as a corporate shareholder's office or a secretary's country.</li>
+  </ul>
+  <p>Sections always arrive in the same order: the detail tabs as CIPA orders them, then Visualisation and Filings.</p>
+</section>
+
+<section id="types" class="doc">
+  <h2>Entity types</h2>
+  <p>CIPA's search form lists five kinds of entity. All five can be read. Removed companies and cancelled business names open normally and report <code>Removed</code> or <code>Cancelled</code> as their status.</p>
+  <div class="table wide"><table>
+    <thead><tr><th>Type</th><th>Identifier</th><th>Section keys</th></tr></thead>
+    <tbody>
+      <tr><td>Private company, public company</td><td>UIN</td><td><code>general</code> <code>addresses</code> <code>directors</code> <code>secretaries</code> <code>shareholders</code> <code>shareAllocations</code> <code>beneficialOwners</code> <code>auditors</code> <code>visualisation</code> <code>filings</code></td></tr>
+      <tr><td>Company limited by guarantee</td><td>UIN</td><td><code>members</code> takes the place of <code>shareholders</code> and <code>shareAllocations</code></td></tr>
+      <tr><td>External company</td><td>UIN</td><td>As a company, with <code>authorisedPersons</code> (persons authorised to accept service) and no <code>secretaries</code></td></tr>
+      <tr><td>Close company</td><td>UIN</td><td><code>general</code> <code>addresses</code> <code>members</code> <code>beneficialOwners</code> <code>accountingOfficers</code> <code>visualisation</code> <code>filings</code></td></tr>
+      <tr><td>Business name</td><td>BN number</td><td><code>general</code> <code>addresses</code> <code>proprietors</code> <code>filings</code></td></tr>
+    </tbody>
+  </table></div>
+  <p><code>availableSections</code> in each response lists the tabs that entity really has. A tab the API has not seen before is still read and returned under a key made from its label. Asking for a section the entity does not have returns it with status <code>unavailable</code>.</p>
+  <div class="note"><p><strong>Business-name numbers come from the certificate.</strong> A name search returns business names with <code>uin: null</code>, and the number cannot be worked out from the search result. Use the number printed on the registration certificate, for example <code>/v1/entities/BN2019%2F11223</code>.</p></div>
+</section>
+
+<section id="errors" class="doc">
+  <h2>Errors</h2>
+  <p>Errors are <code>{ "error": { "code", "message", "retryable", "requestId" } }</code>. Retry only when <code>retryable</code> is true, and wait for the <code>Retry-After</code> header when there is one. The API never retries on its own.</p>
+  <div class="table wide"><table>
+    <thead><tr><th>HTTP</th><th>Code</th><th>What happened</th></tr></thead>
+    <tbody>
+      <tr><td>400</td><td><code>INVALID_REQUEST</code> and other <code>INVALID_…</code> codes, <code>PAGE_OUT_OF_RANGE</code>, <code>SEARCH_PAGE_LIMIT</code></td><td>A parameter is missing or out of range. The message says which.</td></tr>
+      <tr><td>401</td><td><code>UNAUTHORIZED</code></td><td>The server has an API key and the request did not send it.</td></tr>
+      <tr><td>404</td><td><code>ENTITY_NOT_FOUND</code></td><td>CIPA's search returned no entity with that identifier.</td></tr>
+      <tr><td>409</td><td><code>ENTITY_AMBIGUOUS</code></td><td>CIPA returned more than one business name for that number. Use search to tell them apart.</td></tr>
+      <tr><td>429</td><td><code>RATE_LIMITED</code></td><td>Too many requests to this server in a minute.</td></tr>
+      <tr><td>502</td><td><code>UPSTREAM_LAYOUT_CHANGED</code>, <code>UPSTREAM_IDENTITY_MISMATCH</code>, <code>UPSTREAM_UNAVAILABLE</code></td><td>CIPA's page did not look as expected, opened a different entity, or did not respond properly. Nothing uncertain is returned.</td></tr>
+      <tr><td>503</td><td><code>QUEUE_FULL</code>, <code>QUEUE_TIMEOUT</code></td><td>Too many lookups are waiting. Try again shortly.</td></tr>
+      <tr><td>503</td><td><code>UPSTREAM_RATE_LIMITED</code>, <code>UPSTREAM_ACCESS_RESTRICTED</code>, <code>UPSTREAM_COOLDOWN</code></td><td>CIPA limited or refused the session. The server then pauses all lookups for 60 seconds.</td></tr>
+      <tr><td>504</td><td><code>UPSTREAM_TIMEOUT</code>, <code>OPERATION_TIMEOUT</code></td><td>CIPA did not answer in time.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="speed" class="doc">
+  <h2>Speed</h2>
+  <p>Almost all of the time in a call is CIPA's own website answering. A full read opens the entity in up to four browser views at once and clicks through every tab, and each click is a round trip to CIPA.</p>
+  <div class="table"><table>
+    <thead><tr><th>Call</th><th class="num">Typical time</th></tr></thead>
+    <tbody>
+      <tr><td>Any repeat of the same call within five minutes (served from the cache)</td><td class="num">under 0.01 s</td></tr>
+      <tr><td>Search (later result pages take up to 3 s)</td><td class="num">0.4 to 2 s</td></tr>
+      <tr><td><code>include=general</code></td><td class="num">about 2 s</td></tr>
+      <tr><td>Four sections of a large company</td><td class="num">about 5 s</td></tr>
+      <tr><td>Everything, small or medium company</td><td class="num">2.5 to 5 s</td></tr>
+      <tr><td>Everything, large company with long filing and director histories</td><td class="num">5 to 7 s</td></tr>
+      <tr><td>The first read of an entity since the server started</td><td class="num">1 to 2 s more</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Getting faster answers</h3>
+  <ul>
+    <li>Ask only for the sections you need with <code>include</code>. Filings is the slowest tab because CIPA shows at most 20 filings per page.</li>
+    <li>Set <code>history=false</code> when you only need current office holders and addresses.</li>
+    <li>Repeat calls are free for five minutes. Raise <code>CACHE_TTL_MS</code> if slightly older answers are acceptable.</li>
+  </ul>
+
+  <h3>Measured on 3 October 2026</h3>
+  <p>Full reads with every section and history, cache off, on a laptop that was busy with other work. “Before” is the version from 12 September 2026. Times are seconds.</p>
+  <div class="table wide"><table>
+    <thead><tr><th>Company</th><th class="num">Before, first</th><th class="num">Before, repeat</th><th class="num">Now, first</th><th class="num">Now, repeats</th><th class="num">Directors returned</th></tr></thead>
+    <tbody>
+      <tr><td>A small private company</td><td class="num">6.6</td><td class="num">3.6</td><td class="num">3.9</td><td class="num">2.6, 3.5</td><td class="num">1</td></tr>
+      <tr><td>Sefalana Cash &amp; Carry</td><td class="num">4.8</td><td class="num">2.7</td><td class="num">4.3</td><td class="num">2.7, 2.7</td><td class="num">3</td></tr>
+      <tr><td>Mascom Wireless</td><td class="num">5.2</td><td class="num">5.0</td><td class="num">5.1</td><td class="num">4.4, 4.2</td><td class="num">15</td></tr>
+      <tr><td>Kgalagadi Breweries</td><td class="num">6.2</td><td class="num">4.9</td><td class="num">5.9</td><td class="num">4.3, 4.5</td><td class="num">15 before, <span class="better">17 now</span></td></tr>
+      <tr><td>Choppies Enterprises</td><td class="num">11.3</td><td class="num">5.9</td><td class="num">6.8</td><td class="num">5.0, 5.0</td><td class="num">9</td></tr>
+      <tr><td>Botswana Telecommunications</td><td class="num">10.4</td><td class="num">5.9</td><td class="num">5.6</td><td class="num">5.1, 4.5</td><td class="num">20 before, <span class="better">23 now</span></td></tr>
+      <tr><td>Debswana Diamond Company</td><td class="num">7.2</td><td class="num">13.9</td><td class="num">7.0</td><td class="num">5.1, 5.2</td><td class="num">23 or 38 before, <span class="better">38 now</span></td></tr>
+      <tr><td>Engen Botswana</td><td class="num">7.0</td><td class="num">9.0</td><td class="num">7.3</td><td class="num">5.0, 5.8</td><td class="num">12</td></tr>
+      <tr><td>First National Bank of Botswana</td><td class="num">8.7</td><td class="num">7.1</td><td class="num">7.9</td><td class="num">6.2, 6.8</td><td class="num">21</td></tr>
+      <tr><td>Letshego Africa Holdings</td><td class="num">10.0</td><td class="num">8.7</td><td class="num">8.6</td><td class="num">7.3, 6.6</td><td class="num">27 or 20 before, <span class="better">27 now</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>All 30 reads in this run were complete, and each company's three responses were identical. In the earlier version, four of these ten companies sometimes lost directors after the first page. These are measurements from one machine on one day, not a guarantee.</p>
+</section>
+
+<section id="settings" class="doc">
+  <h2>Settings</h2>
+  <p>Set these in <code>.env</code>. The defaults suit one person running it locally.</p>
+  <div class="table wide"><table>
+    <thead><tr><th>Setting</th><th>Default</th><th>What it changes</th></tr></thead>
+    <tbody>
+      <tr><td><code>PORT</code>, <code>HOST</code></td><td><code>3000</code>, <code>127.0.0.1</code></td><td>Where the server listens</td></tr>
+      <tr><td><code>API_KEY</code></td><td>empty</td><td>Required before <code>HOST</code> can be anything other than localhost</td></tr>
+      <tr><td><code>BROWSER_CHANNEL</code></td><td>empty</td><td><code>chrome</code> uses the installed Chrome; empty uses the bundled Chromium</td></tr>
+      <tr><td><code>HYBRID_NAVIGATION</code></td><td><code>false</code></td><td><code>true</code> is the faster mode measured above. <code>false</code> does every step through the visible page controls.</td></tr>
+      <tr><td><code>BROWSER_PREWARM</code></td><td><code>true</code></td><td>Open CIPA's empty search form at startup so the first call is not slow</td></tr>
+      <tr><td><code>CACHE_TTL_MS</code></td><td><code>300000</code></td><td>How long answers are kept in memory. <code>0</code> turns the cache off.</td></tr>
+      <tr><td><code>ROUTE_CACHE_TTL_MS</code></td><td><code>43200000</code></td><td>How long the server remembers an entity's public page link, which saves a repeat search. No company data is kept.</td></tr>
+      <tr><td><code>DETAIL_CONCURRENCY</code></td><td><code>4</code></td><td>Browser views used for one full read, 1 to 4</td></tr>
+      <tr><td><code>BROWSER_CONCURRENCY</code>, <code>SEARCH_CONCURRENCY</code></td><td><code>1</code>, <code>1</code></td><td>Detail reads and searches handled at the same time</td></tr>
+      <tr><td><code>RATE_LIMIT</code></td><td><code>60</code></td><td>Requests per minute this server accepts</td></tr>
+      <tr><td><code>ACTION_TIMEOUT_MS</code>, <code>OPERATION_TIMEOUT_MS</code>, <code>DOCUMENT_TIMEOUT_MS</code></td><td><code>20000</code>, <code>180000</code>, <code>180000</code></td><td>Time limits for one page action, one lookup and one document download</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="how" class="doc">
+  <h2>How it works</h2>
+  <p>CIPAget has no private data source. For each call it opens CIPA's public “Search the Register” page in a headless Chrome browser, searches for what you asked, opens the matching entity, visits the tabs and reads what is displayed. It then returns that as JSON.</p>
+  <div class="cards wide">
+    <div class="card"><strong>On demand only</strong><p>Nothing is fetched until you ask for it, and no register data is written to disk. Answers live in memory for a few minutes.</p></div>
+    <div class="card"><strong>Public pages only</strong><p>It does not log in, pay for documents, solve access challenges or go around restrictions. If CIPA limits or refuses a session, the server stops and waits.</p></div>
+    <div class="card"><strong>One entity at a time</strong><p>It does not crawl or list the register, and it does not follow links from one company to another.</p></div>
+    <div class="card"><strong>It verifies what it opened</strong><p>The identifier on the opened page must match the one you asked for, or the call fails.</p></div>
+    <div class="card"><strong>Not an official CIPA service</strong><p>CIPA can change its site at any time. When a page no longer looks as expected, the API reports an error and does not guess.</p></div>
+  </div>
+  <p>Reading a site with an automated browser is still automated collection, even though the register is public by law. Keep usage occasional and modest, and get advice before using the data commercially or publishing personal details from it.</p>
+</section>
+
+<footer>
+  <p>CIPAget is independent of the Companies and Intellectual Property Authority. Measurements and observed page behaviour on this page are from 3 October 2026. More detail is in <code>README.md</code> and <code>docs/research.md</code>.</p>
+  <p>The code is free to use for non-commercial purposes under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial License 1.0.0</a>. That licence covers the software, not the register data it reads.</p>
+</footer>
+
+</main>
+
+<script>
+(function () {
+  var DEFAULT_BASE = 'http://127.0.0.1:3000';
+  // Served by the API itself, this page can send requests. Opened as a file, it can only write code samples.
+  var live = /^https?:$/.test(location.protocol);
+  var root = document.documentElement;
+
+  function byId(id) { return document.getElementById(id); }
+  // Register text is untrusted, so everything is set as text and never as HTML.
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+  function add(parent) {
+    for (var i = 1; i < arguments.length; i++) if (arguments[i]) parent.appendChild(arguments[i]);
+    return parent;
+  }
+  function button(className, label) { var node = el('button', className, label); node.type = 'button'; return node; }
+  function plural(count, word) { return count + ' ' + word + (count === 1 ? '' : 's'); }
+  function seconds(ms) { return (ms / 1000).toFixed(ms < 10000 ? 2 : 1) + ' s'; }
+  function size(bytes) { return bytes < 1024 ? plural(bytes, 'byte') : bytes < 1048576 ? Math.round(bytes / 1024) + ' KB' : (bytes / 1048576).toFixed(1) + ' MB'; }
+  function enc(value) { return encodeURIComponent(value).replace(/'/g, '%27'); }
+  function copyText(text, control, label) {
+    var done = function () { control.textContent = 'Copied'; setTimeout(function () { control.textContent = label; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { control.textContent = 'Select and copy'; });
+    else control.textContent = 'Select and copy';
+  }
+
+  // Theme: follow the system unless a choice was saved.
+  var themeChoices = Array.prototype.slice.call(document.querySelectorAll('[data-theme-choice]'));
+  function setTheme(choice) {
+    if (choice === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', choice);
+    try { if (choice === 'auto') localStorage.removeItem('cipaget-theme'); else localStorage.setItem('cipaget-theme', choice); } catch (blocked) { /* The choice lasts for this visit only. */ }
+    themeChoices.forEach(function (control) { control.setAttribute('aria-pressed', String(control.getAttribute('data-theme-choice') === choice)); });
+  }
+  themeChoices.forEach(function (control) { control.addEventListener('click', function () { setTheme(control.getAttribute('data-theme-choice')); }); });
+  setTheme(root.getAttribute('data-theme') || 'auto');
+
+  // The sidebar is a drawer on small screens.
+  var menu = byId('menu'), scrim = byId('scrim');
+  function openNav(open) { document.body.classList.toggle('nav-open', open); menu.setAttribute('aria-expanded', String(open)); }
+  menu.addEventListener('click', function () { openNav(!document.body.classList.contains('nav-open')); });
+  scrim.addEventListener('click', function () { openNav(false); });
+  document.addEventListener('keydown', function (event) { if (event.key === 'Escape') openNav(false); });
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sidebar nav a'));
+  links.forEach(function (link) { link.addEventListener('click', function () { openNav(false); }); });
+  byId('openapi-link').hidden = !live;
+
+  // The examples are written for the default address; show the one this page was really served from.
+  if (live && location.origin !== DEFAULT_BASE) {
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), text;
+    while ((text = walker.nextNode())) {
+      if (text.parentNode.nodeName !== 'SCRIPT' && text.nodeValue.indexOf(DEFAULT_BASE) !== -1) text.nodeValue = text.nodeValue.split(DEFAULT_BASE).join(location.origin);
+    }
+  }
+
+  // Copy buttons on every code block.
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var copy = button('ghost', 'Copy');
+    copy.addEventListener('click', function () { copyText(pre.querySelector('code').innerText, copy, 'Copy'); });
+    pre.appendChild(copy);
+  });
+
+  // Where requests go, and the optional key.
+  var base = byId('b-base'), key = byId('c-key'), baseOut = byId('base-url'), baseCopy = byId('base-copy');
+  function baseUrl() { return live ? location.origin : (base.value.trim().replace(/\/+$/, '') || DEFAULT_BASE); }
+  baseCopy.addEventListener('click', function () { copyText(baseUrl(), baseCopy, 'Copy'); });
+  byId('c-base-wrap').hidden = live;
+  byId('c-key-wrap').hidden = !live;
+  byId('c-note').textContent = live
+    ? 'The Try it panels send real requests to this server (' + location.origin + '), and the server then reads CIPA\'s site. Nothing is sent until you press Send request.'
+    : 'You opened this page as a file, so its Try it panels can only write code samples for you. To send requests from the page, open /docs/ on a running server, for example ' + DEFAULT_BASE + '/docs/.';
+
+  // Request samples.
+  function sample(c) {
+    var url = baseUrl() + c.path(), withKey = !!key.value;
+    if (c.language === 'javascript') {
+      return 'const response = await fetch(\'' + url + '\'' + (withKey ? ', {\n  headers: { Authorization: `Bearer ${process.env.CIPAGET_API_KEY}` },\n}' : '') + ');\n'
+        + (c.plain ? 'const health = await response.json();' : 'const { data, meta } = await response.json();');
+    }
+    if (c.language === 'python') {
+      return (withKey ? 'import os\n' : '') + 'import requests\n\nresponse = requests.get(\n    \'' + url + '\',\n'
+        + (withKey ? '    headers={\'Authorization\': \'Bearer \' + os.environ[\'CIPAGET_API_KEY\']},\n' : '') + ')\n'
+        + (c.plain ? 'health = response.json()' : 'data = response.json()[\'data\']');
+    }
+    return 'curl \'' + url + '\'' + (withKey ? ' \\\n  -H "Authorization: Bearer $CIPAGET_API_KEY"' : '');
+  }
+
+  // JSON with colour, built from text nodes.
+  var TOKEN = /("(?:\\.|[^"\\])*")(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g;
+  function paint(code, source) {
+    code.textContent = '';
+    if (source.length > 400000) { code.textContent = source; return; }
+    var parts = document.createDocumentFragment(), last = 0, match;
+    TOKEN.lastIndex = 0;
+    while ((match = TOKEN.exec(source))) {
+      if (match.index > last) parts.appendChild(document.createTextNode(source.slice(last, match.index)));
+      parts.appendChild(el('span', match[1] ? (match[2] ? 'j-key' : 'j-string') : /^[tfn]/.test(match[0]) ? 'j-literal' : 'j-number', match[1] || match[0]));
+      if (match[2]) parts.appendChild(document.createTextNode(match[2]));
+      last = TOKEN.lastIndex;
+    }
+    parts.appendChild(document.createTextNode(source.slice(last)));
+    code.appendChild(parts);
+  }
+
+  // Try it panels.
+  var STATUS = { 200: 'OK', 400: 'Bad Request', 401: 'Unauthorized', 404: 'Not Found', 409: 'Conflict', 429: 'Too Many Requests', 500: 'Internal Server Error', 501: 'Not Implemented', 502: 'Bad Gateway', 503: 'Service Unavailable', 504: 'Gateway Timeout' };
+  var consoles = [];
+  function problem(message, advice) {
+    var note = el('div', 'note bad');
+    add(note, add(el('p'), el('strong', null, message)), advice && el('p', null, advice));
+    return note;
+  }
+  function pills(c, list) {
+    c.pills.textContent = '';
+    list.forEach(function (pill) { if (pill) add(c.pills, el('span', pill[1] ? 'pill ' + pill[1] : 'pill', pill[0])); });
+  }
+  function view(c, tab) {
+    c.tab = tab;
+    c.json.hidden = tab !== 'json'; c.preview.hidden = tab !== 'preview'; c.headers.hidden = tab !== 'headers';
+    c.tabs.forEach(function (control) { control.setAttribute('aria-pressed', String(control.getAttribute('data-tab') === tab)); });
+  }
+  function draw(c) {
+    c.urlOut.textContent = baseUrl() + c.path();
+    c.code.textContent = sample(c);
+    c.languages.forEach(function (control) { control.setAttribute('aria-pressed', String(control.getAttribute('data-language') === c.language)); });
+  }
+  function cacheWords(meta) {
+    return meta.cache === 'hit' ? 'cache hit, ' + (meta.ageMs < 60000 ? Math.round(meta.ageMs / 1000) + ' s' : Math.round(meta.ageMs / 60000) + ' min') + ' old' : 'cache ' + meta.cache;
+  }
+  function fill(c, body, isExample) {
+    var data = body.data || body;
+    c.preview.textContent = '';
+    paint(c.jsonCode, JSON.stringify(body, c.shrink, 2));
+    try { c.render(data, c.preview, c, isExample); }
+    catch (failure) {
+      console.error(failure);
+      add(c.preview, problem('This page could not lay out the answer.', 'The JSON tab has all of it.'));
+    }
+  }
+  function show(c, response, body, raw, took) {
+    c.headers.textContent = '';
+    if (response) {
+      var list = el('dl', 'header-list');
+      response.headers.forEach(function (value, name) { add(list, add(el('div'), el('dt', null, name), el('dd', null, value))); });
+      add(c.headers, list);
+    }
+    if (!response || !body) {
+      pills(c, [[response ? response.status + ' ' + (STATUS[response.status] || '') : 'No answer', 'bad'], [seconds(took)]]);
+      c.jsonCode.textContent = response ? raw.slice(0, 4000) : '';
+      c.preview.textContent = '';
+      add(c.preview, problem(response ? 'The server answered, but not with JSON.' : 'The server did not answer.', response ? null : 'Check that it is still running at ' + location.origin + '.'));
+      if (!response) { add(c.headers, el('p', 'hint', 'No headers, because there was no answer.')); view(c, 'preview'); }
+      return;
+    }
+    if (!response.ok || body.error) {
+      var error = body.error || {}, wait = response.headers.get('Retry-After');
+      pills(c, [[response.status + ' ' + (STATUS[response.status] || ''), 'bad'], error.code && [error.code], [seconds(took)], [error.retryable ? 'can be retried' : 'do not retry']]);
+      paint(c.jsonCode, JSON.stringify(body, null, 2));
+      c.preview.textContent = '';
+      add(c.preview, problem(error.message || 'The request failed.',
+        response.status === 401 ? 'Enter the server\'s API key under Quickstart, then send again.' : wait ? 'Wait ' + wait + ' seconds before trying again.' : null));
+      return;
+    }
+    var data = body.data || body;
+    pills(c, [[response.status + ' ' + (STATUS[response.status] || ''), 'ok'], [seconds(took)], [size(raw.length)], body.meta && [cacheWords(body.meta)],
+      data.complete === true ? ['complete'] : data.complete === false ? ['incomplete', 'warn'] : null, c.count && [c.count(data)]]);
+    fill(c, body, false);
+  }
+  function send(c) {
+    var path = c.path();
+    if (!live || c.busy || !path) return;
+    c.busy = true; c.button.disabled = true;
+    c.urls.forEach(function (url) { URL.revokeObjectURL(url); });
+    c.urls = [];
+    var started = performance.now(), clock = el('span', 'pill', '0.0 s'), card = c.mount.parentNode;
+    clock.setAttribute('aria-hidden', 'true');
+    pills(c, [[c.waiting]]);
+    add(c.pills, clock);
+    // Side by side, the panel scrolls on its own; bring the response to the top of it.
+    if (card.scrollHeight > card.clientHeight) card.scrollTop = c.response.offsetTop;
+    var pinned = card.scrollTop;
+    var timer = setInterval(function () { clock.textContent = (Math.floor((performance.now() - started) / 100) / 10).toFixed(1) + ' s'; }, 100);
+    var headers = { Accept: 'application/json' };
+    if (key.value) headers.Authorization = 'Bearer ' + key.value;
+    function finish(response, body, raw) {
+      clearInterval(timer); c.busy = false; c.button.disabled = false;
+      show(c, response, body, raw, performance.now() - started);
+      // The answer is usually longer than what it replaced; keep it at the top unless the reader has scrolled.
+      if (card.scrollTop === pinned && card.scrollHeight > card.clientHeight) card.scrollTop = c.response.offsetTop;
+    }
+    fetch(path, { headers: headers, cache: 'no-store' }).then(function (response) {
+      return response.text().then(function (raw) {
+        var body = null;
+        try { body = JSON.parse(raw); } catch (failure) { /* Not JSON; reported as a failure. */ }
+        finish(response, body, raw);
+      });
+    }, function () { finish(null, null, ''); });
+  }
+  function makeConsole(c) {
+    c.button = c.form.querySelector('.send'); c.urlOut = c.form.querySelector('.urlbar code');
+    c.urls = []; c.language = 'curl';
+
+    var request = el('div', 'panel'), requestHead = el('div', 'panel-head'), languageTabs = el('div', 'tabs'), requestPre = el('pre', 'wrap'), copyRequest = button('ghost', 'Copy');
+    c.code = el('code');
+    c.languages = [['curl', 'cURL'], ['javascript', 'JavaScript'], ['python', 'Python']].map(function (pair) {
+      var control = button(null, pair[1]);
+      control.setAttribute('data-language', pair[0]);
+      control.addEventListener('click', function () { c.language = pair[0]; draw(c); });
+      return add(languageTabs, control) && control;
+    });
+    copyRequest.addEventListener('click', function () { copyText(c.code.textContent, copyRequest, 'Copy'); });
+    add(request, add(requestHead, el('span', 'panel-title', 'Request'), languageTabs, copyRequest), add(el('div', 'body'), add(requestPre, c.code)));
+
+    var response = el('div', 'panel'), responseHead = el('div', 'panel-head'), responseTabs = el('div', 'tabs'), copyResponse = button('ghost', 'Copy');
+    c.pills = el('div', 'pills'); c.pills.setAttribute('role', 'status');
+    c.json = el('div', 'body'); c.jsonCode = el('code');
+    c.preview = el('div', 'body preview'); c.headers = el('div', 'body');
+    c.tabs = [['json', 'JSON'], ['preview', 'Preview'], ['headers', 'Headers']].map(function (pair) {
+      var control = button(null, pair[1]);
+      control.setAttribute('data-tab', pair[0]);
+      control.addEventListener('click', function () { view(c, pair[0]); });
+      return add(responseTabs, control) && control;
+    });
+    copyResponse.addEventListener('click', function () { copyText(c.jsonCode.textContent, copyResponse, 'Copy'); });
+    add(response, add(responseHead, el('span', 'panel-title', 'Response'), responseTabs, copyResponse), c.pills, add(c.json, add(el('pre'), c.jsonCode)), c.preview, c.headers);
+    add(c.mount, request, response);
+    c.response = response;
+
+    c.form.addEventListener('submit', function (event) { event.preventDefault(); send(c); });
+    c.form.addEventListener('input', function () { draw(c); });
+    c.form.addEventListener('change', function () { draw(c); });
+    if (!live) {
+      c.button.disabled = true;
+      c.form.querySelector('.tryit-head .hint').textContent = 'Open this page from a running server to send requests.';
+    }
+    pills(c, [['Example']]);
+    fill(c, c.example, true);
+    add(c.headers, el('p', 'hint', 'Send the request to see its headers.'));
+    view(c, 'json');
+    consoles.push(c);
+    return c;
+  }
+
+  // Laying out register data.
+  function fieldTable(fields) {
+    var table = el('table', 'kv'), body = el('tbody'), group = null;
+    fields.forEach(function (field) {
+      var name = field.group || null;
+      if (name !== group) {
+        group = name;
+        if (name) { var heading = el('th', null, name); heading.colSpan = 2; add(body, add(el('tr', 'group'), heading)); }
+      }
+      var label = el('th', null, field.label || field.key);
+      label.scope = 'row';
+      add(body, add(el('tr'), label, el('td', field.value === null ? 'none' : null, field.value === null ? field.displayValue : field.value)));
+    });
+    return add(el('div', 'scroll'), add(table, body));
+  }
+  function recordList(records) {
+    var list = el('ul', 'records');
+    records.forEach(function (record) {
+      var item = el('li'), title = el('p', 'record-title', record.title || 'Untitled');
+      if (record.group) add(title, el('span', 'tag', record.group));
+      add(item, title);
+      (record.summary || []).forEach(function (line) { add(item, el('p', 'record-line', line)); });
+      if (record.fields && record.fields.length) add(item, fieldTable(record.fields));
+      add(list, item);
+    });
+    return list;
+  }
+  function dataTable(table) {
+    var head = el('tr'), body = el('tbody');
+    (table.headers || []).forEach(function (heading) { add(head, el('th', null, heading)); });
+    (table.rows || []).forEach(function (row) {
+      var line = el('tr');
+      row.forEach(function (cell) { add(line, el('td', null, cell)); });
+      add(body, line);
+    });
+    return add(el('div', 'scroll'), add(el('table'), add(el('thead'), head), body));
+  }
+  function sectionPart(sectionKey, section) {
+    var part = el('details', 'part'), facts = [section.status];
+    var records = section.records || [], tables = section.tables || [], inRecords = {};
+    function mark(field) { return field.key + '\n' + field.displayValue + '\n' + (field.group || ''); }
+    records.forEach(function (record) { (record.fields || []).forEach(function (field) { inRecords[mark(field)] = (inRecords[mark(field)] || 0) + 1; }); });
+    // A section lists every record's fields again; keep only the ones that belong to no record.
+    var fields = (section.fields || []).filter(function (field) { return !(inRecords[mark(field)] && inRecords[mark(field)]--); });
+    var rows = tables.reduce(function (sum, table) { return sum + (table.rows || []).length; }, 0);
+    var statements = (section.ownershipStatements || []).length, dialogs = (section.filingDetails || []).length;
+    if (fields.length) facts.push(plural(fields.length, 'field'));
+    if (records.length) facts.push(plural(records.length, 'record'));
+    if (rows) facts.push(plural(rows, 'table row'));
+    if (statements) facts.push(plural(statements, 'ownership statement'));
+    if (dialogs) facts.push(plural(dialogs, 'filing dialog'));
+    if (section.pagesFetched > 1) facts.push(plural(section.pagesFetched, 'page') + ' read');
+    if (section.complete === false) facts.push('incomplete');
+    add(part, add(el('summary'), el('span', 'part-name', section.label || sectionKey), el('code', null, sectionKey), el('span', 'part-facts', facts.join(', '))));
+    if (section.warnings && section.warnings.length) add(part, problem('CIPAget noted a problem in this section.', section.warnings.join(' ')));
+    if (fields.length) add(part, fieldTable(fields));
+    if (records.length) add(part, recordList(records));
+    tables.forEach(function (table) { add(part, dataTable(table)); });
+    if (statements) add(part, el('p', 'hint', 'The ownership statements are in the BODS format. Open the JSON tab to read them.'));
+    if (dialogs) add(part, el('p', 'hint', 'Open the JSON tab to read the filing dialogs.'));
+    if (!fields.length && !records.length && !rows && !statements && !dialogs) {
+      if (section.text) add(part, el('p', 'plain-text', section.text));
+      else add(part, el('p', 'hint', section.status === 'unavailable' ? 'This entity has no such tab on CIPA\'s site.' : section.status === 'empty' ? 'CIPA shows nothing in this tab.' : 'Nothing was read from this tab.'));
+    }
+    return part;
+  }
+
+  // Search.
+  var searchQuery = byId('s-q'), searchSize = byId('s-size'), searchPage = byId('s-page');
+  function searchPath() {
+    var page = Number(searchPage.value) || 1;
+    return '/v1/search?q=' + enc(searchQuery.value.trim()) + (page > 1 ? '&page=' + page : '') + (searchSize.value !== '20' ? '&pageSize=' + searchSize.value : '');
+  }
+  function renderSearch(data, into, c, isExample) {
+    if (data.warnings && data.warnings.length) add(into, problem('CIPAget noted:', data.warnings.join(' ')));
+    if (!data.items.length) { add(into, el('p', 'hint', 'CIPA\'s search found nothing for “' + data.query + '”.')); return; }
+    var list = el('ol', 'entries');
+    data.items.forEach(function (item) {
+      var entry = el('li'), facts = el('div', 'entry-meta');
+      var earlier = (item.previousNames || []).concat(item.previousAddresses || []);
+      add(facts, el('span', null, item.uin || 'No number shown by CIPA'), item.entityType && el('span', null, item.entityType),
+        item.status && el('span', null, 'Status: ' + item.status), item.registeredOn && el('span', null, 'Registered on ' + item.registeredOn));
+      add(entry, el('p', 'entry-name', item.name), facts, item.address && el('p', 'entry-line', item.address));
+      if (earlier.length) {
+        var past = el('ul');
+        earlier.forEach(function (line) { add(past, el('li', null, line)); });
+        add(entry, add(el('details'), el('summary', null, earlier.length + (earlier.length === 1 ? ' earlier name or address' : ' earlier names and addresses')), past));
+      }
+      if (item.uin && !isExample) {
+        var open = button('ghost', 'Read its details');
+        open.addEventListener('click', function () {
+          entityId.value = item.uin;
+          drawEntity(); draw(entityConsole); view(entityConsole, 'preview');
+          byId('entity-try').scrollIntoView();
+          send(entityConsole);
+        });
+        add(entry, open);
+      }
+      add(list, entry);
+    });
+    add(into, list);
+    if (isExample) return;
+    var foot = el('p', 'hint', 'Page ' + data.page + '. ' + (data.hasMore ? 'CIPA has more results. ' : 'There are no more results.'));
+    foot.style.marginTop = '10px';
+    if (data.hasMore && data.page < 20) {
+      var next = button('ghost', 'Read the next page');
+      next.addEventListener('click', function () { searchPage.value = data.page + 1; draw(searchConsole); send(searchConsole); });
+      add(foot, next);
+    }
+    add(into, foot);
+  }
+  var searchConsole = makeConsole({ form: byId('s-form'), mount: byId('s-io'), path: searchPath, render: renderSearch,
+    waiting: 'Searching CIPA\'s site', count: function (data) { return plural(data.items.length, 'result'); },
+    example: { data: { query: 'Letshego', items: [{ uin: 'BW00000877524', name: 'Letshego Africa Holdings Limited', status: 'Registered', register: 'Companies', entityType: 'Public company', registeredOn: '1998-03-04',
+      address: 'Tower C, Zambezi Towers, Plot 54352, Central Business District, Gaborone, Botswana', previousNames: ['Letshego Holdings Limited (04 March 1998 - 17 April 2023)'],
+      previousAddresses: ['2nd Floor Letshego Place, Plot 22, Khama Crescent, The Mall, Gaborone, Botswana (04 March 1998 - 09 January 2022)'], fields: [], text: '…' }],
+      page: 1, pageSize: 20, hasMore: false, total: null, retrievedAt: '2026-10-03T02:41:09.512Z', source: 'https://www.cipa.co.bw/master/ui/start/CIPARegisterSearch', sourcePagesFetched: 1, warnings: [] },
+      meta: { cache: 'miss', ageMs: 0, durationMs: 912 } } });
+  searchQuery.addEventListener('input', function () { searchPage.value = 1; });
+  document.querySelectorAll('[data-fill]').forEach(function (control) {
+    control.addEventListener('click', function () { searchQuery.value = control.getAttribute('data-fill'); searchPage.value = 1; draw(searchConsole); searchQuery.focus(); });
+  });
+
+  // Entity details.
+  var sectionsByKind = {
+    company: ['general', 'addresses', 'directors', 'secretaries', 'shareholders', 'shareAllocations', 'beneficialOwners', 'auditors', 'members', 'authorisedPersons', 'accountingOfficers', 'visualisation', 'filings'],
+    businessName: ['general', 'addresses', 'proprietors', 'filings']
+  };
+  var entityId = byId('b-id'), hint = byId('b-id-hint');
+  var chips = byId('b-sections'), history = byId('b-history'), details = byId('b-details'), pages = byId('b-pages');
+  var kind = null;
+  function kindOf(value) {
+    if (/^BW\d{5,20}$/i.test(value)) return 'company';
+    if (/^BN\d{4}\/\d{1,10}$/i.test(value)) return 'businessName';
+    return null;
+  }
+  function kindWords(found) {
+    return found === 'businessName' ? 'Business name. The slash is sent as %2F.' : found === 'company' ? 'Company UIN.' : 'Enter BW followed by 5 to 20 digits, or BN, a year, a slash and a number.';
+  }
+  function drawChips(next) {
+    if (next === kind) return;
+    kind = next; chips.textContent = '';
+    (sectionsByKind[kind] || sectionsByKind.company).forEach(function (sectionKey) {
+      var label = document.createElement('label'), box = document.createElement('input'), name = document.createElement('span');
+      box.type = 'checkbox'; box.value = sectionKey; name.textContent = sectionKey;
+      label.appendChild(box); label.appendChild(name); chips.appendChild(label);
+    });
+  }
+  function entityPath() {
+    var picked = Array.prototype.slice.call(chips.querySelectorAll('input:checked')).map(function (box) { return box.value; });
+    var query = [];
+    if (picked.length) query.push('include=' + picked.join(','));
+    if (!history.checked) query.push('history=false');
+    if (details.checked) query.push('filingDetails=true');
+    if (pages.value && pages.value !== '10') query.push('maxPages=' + enc(pages.value));
+    return '/v1/entities/' + enc(entityId.value.trim().toUpperCase() || '…') + (query.length ? '?' + query.join('&') : '');
+  }
+  function drawEntity() {
+    var found = kindOf(entityId.value.trim());
+    drawChips(found || 'company');
+    hint.textContent = kindWords(found);
+  }
+  function renderEntity(data, into) {
+    var facts = el('div', 'entry-meta'), names = Object.keys(data.sections || {});
+    add(facts, el('span', null, data.uin), data.entityType && el('span', null, data.entityType), data.status && el('span', null, 'Status: ' + data.status));
+    add(into, el('h4', 'sheet-name', data.name), facts);
+    if (data.warnings && data.warnings.length) add(into, problem(data.complete === false ? 'This answer is incomplete.' : 'CIPAget noted:', data.warnings.join(' ')));
+    var parts = names.map(function (name) { return sectionPart(name, data.sections[name]); });
+    if (parts.length) parts[0].open = true;
+    if (parts.length > 1) {
+      var all = button('ghost', 'Open every section');
+      all.addEventListener('click', function () {
+        var open = all.textContent === 'Open every section';
+        parts.forEach(function (part) { part.open = open; });
+        all.textContent = open ? 'Close every section' : 'Open every section';
+      });
+      add(into, all);
+    }
+    parts.forEach(function (part) { add(into, part); });
+  }
+  drawEntity();
+  entityId.addEventListener('input', drawEntity);
+  var exampleSection = { status: 'available', records: [], tables: [], text: '…', pagesFetched: 1, total: null, complete: true, warnings: [] };
+  var entityConsole = makeConsole({ form: byId('builder'), mount: byId('b-io'), path: entityPath, render: renderEntity,
+    waiting: 'Reading the entity on CIPA\'s site', count: function (data) { return plural(Object.keys(data.sections || {}).length, 'section'); },
+    example: { data: { uin: 'BW00000790718', name: 'Sefalana Cash & Carry Limited', status: 'Registered', entityType: 'Public company',
+      availableSections: [{ key: 'general', label: 'General Details' }, { key: 'addresses', label: 'Addresses' }],
+      sections: {
+        general: Object.assign({ label: 'General Details', fields: [
+          { key: 'companyName', label: 'Company Name', value: 'Sefalana Cash & Carry Limited', displayValue: 'Sefalana Cash & Carry Limited' },
+          { key: 'uin', label: 'UIN', value: 'BW00000790718', displayValue: 'BW00000790718' },
+          { key: 'companyStatus', label: 'Company status', value: 'Registered', displayValue: 'Registered' }] }, exampleSection),
+        addresses: Object.assign({ label: 'Addresses', fields: [
+          { key: 'registeredOfficeAddress', label: 'Registered Office Address', value: 'Plot 203, Independence Avenue, Gaborone, Botswana (Effective from 15 September 2025)', displayValue: 'Plot 203, Independence Avenue, Gaborone, Botswana (Effective from 15 September 2025)' },
+          { key: 'previousRegisteredOfficeAddress', label: 'Registered Office Address', value: 'Grant Thornton Business Services, Plot 50370, Acumen Park, Fairgrounds, Gaborone, Botswana (Effective from 12 October 1973 to 14 September 2025)', displayValue: 'Grant Thornton Business Services, Plot 50370, Acumen Park, Fairgrounds, Gaborone, Botswana (Effective from 12 October 1973 to 14 September 2025)', group: 'Previous Addresses' }] }, exampleSection) },
+      complete: true, warnings: [], retrievedAt: '2026-10-03T02:42:17.348Z', source: 'https://www.cipa.co.bw/master/ui/start/CIPARegisterSearch' },
+      meta: { cache: 'miss', ageMs: 0, durationMs: 4249 } } });
+
+  // Documents.
+  var documentId = byId('d-id'), documentHint = byId('d-hint');
+  var documentNames = { incorporationCertificate: 'Certificate', standardExtract: 'Standard extract' };
+  function documentsPath() { return '/v1/entities/' + enc(documentId.value.trim().toUpperCase() || '…') + '/documents'; }
+  function drawDocuments() { documentHint.textContent = kindWords(kindOf(documentId.value.trim())); }
+  function pdfBytes(base64) {
+    var binary = atob(base64), bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+  function renderDocuments(data, into, c, isExample) {
+    var list = el('ul', 'entries');
+    add(into, el('h4', 'sheet-name', data.name), add(el('div', 'entry-meta'), el('span', null, data.uin)));
+    if (data.warnings && data.warnings.length) add(into, problem('CIPAget noted:', data.warnings.join(' ')));
+    data.documents.forEach(function (doc) {
+      var entry = el('li'), facts = el('div', 'entry-meta');
+      add(facts, el('span', null, 'Status: ' + doc.status), doc.filename && el('span', null, doc.filename), doc.sizeBytes != null && el('span', null, size(doc.sizeBytes)));
+      add(entry, el('p', 'entry-name', documentNames[doc.kind] || doc.kind), facts);
+      if (doc.sha256) add(entry, el('p', 'entry-line', 'SHA-256 ' + doc.sha256));
+      (doc.warnings || []).forEach(function (warning) { add(entry, el('p', 'hint', warning)); });
+      if (doc.status === 'available' && doc.contentBase64 && !isExample) {
+        var url = URL.createObjectURL(new Blob([pdfBytes(doc.contentBase64)], { type: 'application/pdf' })), save = el('a', 'ghost', 'Save the PDF');
+        save.href = url; save.download = doc.filename || doc.kind + '.pdf';
+        c.urls.push(url);
+        add(entry, save);
+      }
+      add(list, entry);
+    });
+    add(into, list);
+  }
+  drawDocuments();
+  documentId.addEventListener('input', drawDocuments);
+  makeConsole({ form: byId('d-form'), mount: byId('d-io'), path: documentsPath, render: renderDocuments,
+    waiting: 'CIPA is building the PDFs',
+    count: function (data) { return data.documents.filter(function (doc) { return doc.status === 'available'; }).length + ' of ' + plural(data.documents.length, 'PDF'); },
+    // The JSON tab shortens each PDF's text; the Save links hold the whole file.
+    shrink: function (name, value) { return name === 'contentBase64' && typeof value === 'string' && value.length > 64 ? value.slice(0, 48) + '… (' + value.length + ' characters in all)' : value; },
+    example: { data: { uin: 'BW00000000000', name: 'Example Company Proprietary Limited', documents: [
+      { kind: 'incorporationCertificate', status: 'available', filename: 'Incorporation-Example Company Proprietary Limited-BW00000000000.pdf', mimeType: 'application/pdf', encoding: 'base64',
+        contentBase64: 'JVBERi0xLjcK…', sizeBytes: 184320, sha256: '9f2c41d0a7b35e6884c1f0d2ab97c3e5d41f60b8a2c9e7354d1b0f8a6c2e9d47', retrievedAt: '2026-10-09T10:32:04.118Z', warnings: [] },
+      { kind: 'standardExtract', status: 'available', filename: 'Private_Company_Standard_Extract_BW00000000000.pdf', mimeType: 'application/pdf', encoding: 'base64',
+        contentBase64: 'JVBERi0xLjQK…', sizeBytes: 108544, sha256: '3d7a90c2f4e1b8566a0d9c3e7f2b1a48c5e6d0937b8f1a2c4e9d6b0537f8c1ae', retrievedAt: '2026-10-09T10:32:04.118Z', warnings: [] }],
+      complete: true, warnings: [], retrievedAt: '2026-10-09T10:32:04.118Z', source: 'https://www.cipa.co.bw/master/ui/start/CIPARegisterSearch' },
+      meta: { cache: 'miss', ageMs: 0, durationMs: 15338 } } });
+
+  // Server check.
+  function renderHealth(data, into) {
+    function lane(counts) { return counts ? counts.active + ' running, ' + counts.queued + ' waiting, ' + counts.concurrency + ' at a time' : 'Not reported'; }
+    var rows = [
+      ['Server', data.status === 'ok' ? 'Running' : String(data.status)],
+      ['Detail reads', lane(data)], ['Searches', lane(data.search)], ['Document downloads', lane(data.documents)],
+      ['Stored answers', data.cache ? data.cache.entries + ' (' + size(data.cache.bytes) + ')' : 'Not reported'],
+      ['Pause after a refusal by CIPA', data.cooldownMs ? seconds(data.cooldownMs) + ' left' : 'None']
+    ], body = el('tbody');
+    rows.forEach(function (row) {
+      var label = el('th', null, row[0]);
+      label.scope = 'row';
+      add(body, add(el('tr'), label, el('td', null, row[1])));
+    });
+    add(into, add(el('div', 'scroll'), add(el('table', 'kv'), body)));
+  }
+  var exampleLane = { transport: 'hybrid', hybridViews: 5, hybridFallbacks: 0, hybridResets: 0, resetFallbacks: 0, publicLinkHits: 4, searchFallbacks: 0 };
+  makeConsole({ form: byId('h-form'), mount: byId('h-io'), path: function () { return '/healthz'; }, render: renderHealth, waiting: 'Asking this server', plain: true,
+    example: { status: 'ok', active: 0, queued: 0, concurrency: 1, transport: exampleLane,
+      search: { active: 0, queued: 0, concurrency: 1, transport: Object.assign({}, exampleLane, { hybridViews: 0, hybridResets: 4, publicLinkHits: 0 }) },
+      documents: { active: 0, queued: 0, concurrency: 1, transport: Object.assign({}, exampleLane, { transport: 'browser', hybridViews: 0, publicLinkHits: 0 }) },
+      cache: { entries: 2, bytes: 39449 }, cooldownMs: 0 } });
+
+  function drawAll() { baseOut.textContent = baseUrl(); consoles.forEach(draw); }
+  [base, key].forEach(function (input) { input.addEventListener('input', drawAll); });
+  drawAll();
+
+  // Mark the section being read in the sidebar.
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        links.forEach(function (link) {
+          if (link.getAttribute('href') === '#' + entry.target.id) link.setAttribute('aria-current', 'true'); else link.removeAttribute('aria-current');
+        });
+      });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+    document.querySelectorAll('main > section').forEach(function (section) { observer.observe(section); });
+  }
+})();
+</script>
+</body>
+</html>
