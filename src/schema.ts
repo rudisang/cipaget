@@ -19,4 +19,4 @@ export const schemas = [
   { $id:'Error',type:'object',properties:{error:{type:'object',properties:{code:text,message:text,retryable:{type:'boolean'},requestId:text}}} },
 ];
 export const envelope = (type: string) => ({type:'object',properties:{data:{$ref:`${type}#`},meta:{type:'object',properties:{cache:{enum:['hit','miss','coalesced']},ageMs:{type:'number'},durationMs:{type:'number'}}}}});
-export const errorResponses = Object.fromEntries([400,401,404,429,502,503,504].map(status => [status,{$ref:'Error#'}]));
+export const errorResponses = Object.fromEntries([400,401,403,404,429,502,503,504].map(status => [status,{$ref:'Error#'}]));

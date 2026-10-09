@@ -2,7 +2,7 @@ export interface Config {
   host: string; port: number; apiKey?: string; channel?: string; headless: boolean;
   concurrency: number; maxQueue: number; queueTimeoutMs: number; operationTimeoutMs: number;
   actionTimeoutMs: number; cacheTtlMs: number; cacheMaxEntries: number; cacheMaxBytes: number;
-  rateLimit: number; prewarm: boolean; detailConcurrency: number; documentTimeoutMs:number; hybridNavigation: boolean; searchConcurrency: number; routeCacheTtlMs: number;
+  rateLimit: number; prewarm: boolean; detailConcurrency: number; documentTimeoutMs:number; hybridNavigation: boolean; searchConcurrency: number; routeCacheTtlMs: number; allowedHosts: string[];
 }
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const integer = (key: string, fallback: number, min: number, max: number) => {
@@ -31,5 +31,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     hybridNavigation: env.HYBRID_NAVIGATION === 'true',
     searchConcurrency: integer('SEARCH_CONCURRENCY', 1, 1, 4),
     routeCacheTtlMs: integer('ROUTE_CACHE_TTL_MS', 12 * 60 * 60_000, 0, 7 * 24 * 60 * 60_000),
+    allowedHosts: (env.ALLOWED_HOSTS ?? '').split(',').map(name => name.trim().toLowerCase()).filter(Boolean),
   };
 }

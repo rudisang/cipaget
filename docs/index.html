@@ -376,7 +376,7 @@ npm run dev               <span class="n"># or: npm run build &amp;&amp; npm sta
     <div class="card"><strong>Requests wait their turn</strong><p>Unless you change the settings, one detail read, one search and one document download run at a time. Up to 20 more wait in each line for at most 30 seconds, then fail with a 503.</p></div>
     <div class="card"><strong>60 requests a minute</strong><p>Past that, the server answers 429 until the minute is over.</p></div>
     <div class="card"><strong>If CIPA refuses, everything pauses</strong><p>When CIPA limits or blocks the browser session, all lookups stop for 60 seconds.</p></div>
-    <div class="card"><strong>A key may be required</strong><p>The operator can require an API key, sent as <code>Authorization: Bearer &lt;key&gt;</code>. A server that listens on anything other than localhost must have one. Web pages on other sites cannot call it from a browser.</p></div>
+    <div class="card"><strong>A key may be required</strong><p>The operator can require an API key, sent as <code>Authorization: Bearer &lt;key&gt;</code>. A server that listens on anything other than localhost must have one. A server without a key only answers requests addressed to localhost. Web pages on other sites cannot call it from a browser.</p></div>
   </div>
 </section>
 
@@ -688,6 +688,7 @@ for (const doc of data.documents) {
     <tbody>
       <tr><td>400</td><td><code>INVALID_REQUEST</code> and other <code>INVALID_…</code> codes, <code>PAGE_OUT_OF_RANGE</code>, <code>SEARCH_PAGE_LIMIT</code></td><td>A parameter is missing or out of range. The message says which.</td></tr>
       <tr><td>401</td><td><code>UNAUTHORIZED</code></td><td>The server has an API key and the request did not send it.</td></tr>
+      <tr><td>403</td><td><code>HOST_NOT_ALLOWED</code>, <code>CROSS_SITE_REQUEST</code></td><td>The server has no API key and was addressed by a name other than localhost, or the request came from a web page on another site.</td></tr>
       <tr><td>404</td><td><code>ENTITY_NOT_FOUND</code></td><td>CIPA's search returned no entity with that identifier.</td></tr>
       <tr><td>409</td><td><code>ENTITY_AMBIGUOUS</code></td><td>CIPA returned more than one business name for that number. Use search to tell them apart.</td></tr>
       <tr><td>429</td><td><code>RATE_LIMITED</code></td><td>Too many requests to this server in a minute.</td></tr>
@@ -750,6 +751,7 @@ for (const doc of data.documents) {
     <tbody>
       <tr><td><code>PORT</code>, <code>HOST</code></td><td><code>3000</code>, <code>127.0.0.1</code></td><td>Where the server listens</td></tr>
       <tr><td><code>API_KEY</code></td><td>empty</td><td>Required before <code>HOST</code> can be anything other than localhost</td></tr>
+      <tr><td><code>ALLOWED_HOSTS</code></td><td>empty</td><td>Extra hostnames, separated by commas, that a server without an API key may be reached by. Without it, such a server only answers to localhost.</td></tr>
       <tr><td><code>BROWSER_CHANNEL</code></td><td>empty</td><td><code>chrome</code> uses the installed Chrome; empty uses the bundled Chromium</td></tr>
       <tr><td><code>HYBRID_NAVIGATION</code></td><td><code>false</code></td><td><code>true</code> is the faster mode measured above. <code>false</code> does every step through the visible page controls.</td></tr>
       <tr><td><code>BROWSER_PREWARM</code></td><td><code>true</code></td><td>Open CIPA's empty search form at startup so the first call is not slow</td></tr>

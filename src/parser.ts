@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import type { Cheerio, CheerioAPI } from 'cheerio';
 import type { AnyNode } from 'domhandler';
 import { ApiError } from './errors.js';
+import { isBusinessNameRegister } from './identifiers.js';
 import type { DataRecord, DataTable, Field, SearchItem, Section } from './types.js';
 
 export const clean = (value: string | null | undefined): string => (value ?? '').replace(/[\uE000-\uF8FF]/g, '').replace(/\s+/g, ' ').trim();
@@ -158,8 +159,9 @@ export function parseSearch(html: string): { items: SearchItem[]; hasMore: boole
   const items = $('.search-result').toArray().map(el => {
     const card = $(el), title = clean(card.find('a.searchView').first().text());
     if (!title) throw new ApiError('UPSTREAM_LAYOUT_CHANGED', 'A CIPA search result has no readable name.');
-    const match = title.match(/^(.*?)\s*\((BW\d+)\)$/i);
     const tokens = card.find('.tokenized-line .token').toArray().map(el => clean($(el).text()));
+    // Only company cards end with their UIN. A business name is free text, so a number at the end of one is part of the name.
+    const match = isBusinessNameRegister(tokens[1]) ? null : title.match(/^(.*?)\s*\((BW\d+)\)$/i);
     // The card shows the current address, then separate "previous names" and "previous addresses" disclosures.
     const notes = card.find('.dd.value').toArray().map(note => ({ value: clean($(note).text()), group: groupOf($, note, el, null) }));
     const current = notes.filter(note => !note.group).map(note => note.value);

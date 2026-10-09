@@ -14,8 +14,11 @@ test('HTTP validation, authentication, cache headers, error shapes and OpenAPI',
   try {
     assert.equal((await app.inject('/healthz')).statusCode,200);
     assert.equal((await app.inject('/v1/search?q=Example')).statusCode,401);
+    // The router decodes percent-encoding, so this is the same route and needs the same key.
+    assert.equal((await app.inject('/%76%31/search?q=Example')).statusCode,401);
     const headers={authorization:'Bearer test-key'};
     for(const url of ['/v1/search?q=%20%20','/v1/search?q=Example&limit=1','/v1/search?q=Example&page=1.5','/v1/entities/BW00000123456?history=wat','/v1/entities/BW00000123456?include=__proto__'])assert.equal((await app.inject({url,headers})).statusCode,400,url);
+    assert.equal((await app.inject({url:'/v1/search?q=Example',headers:{...headers,host:'api.example.org'}})).statusCode,200);
     const response=await app.inject({url:'/v1/search?q=Example',headers});
     assert.equal(response.statusCode,200);assert.deepEqual(response.json().data.items,[]);assert.equal(response.headers['cache-control'],'no-store');
     assert.equal((await app.inject({url:'/v1/search?q=Example',headers})).headers['x-cache'],'hit');
@@ -40,6 +43,20 @@ test('startup warms only the browser, can be disabled, and failure does not prev
       assert.equal(searches,1);
     } finally {await app.close();}
   }
+});
+test('without a key the server answers only requests addressed to it locally, and never pages on other sites',async()=>{
+  const app=await buildApp({...loadConfig({ALLOWED_HOSTS:'registry.example.org'}),prewarm:false},provider);
+  try {
+    const search=(headers:Record<string,string>)=>app.inject({url:'/v1/search?q=Example',headers});
+    for(const host of ['localhost:3000','127.0.0.1:3000','[::1]:3000','registry.example.org'])assert.equal((await search({host})).statusCode,200,host);
+    // A page that points its own hostname at this machine reaches the server under that name.
+    const rebound=await search({host:'attacker.example:3000'});assert.equal(rebound.statusCode,403);assert.equal(rebound.json().error.code,'HOST_NOT_ALLOWED');
+    assert.equal((await app.inject({url:'/healthz',headers:{host:'attacker.example'}})).statusCode,403);
+    const crossSite=await search({host:'127.0.0.1:3000','sec-fetch-site':'cross-site'});assert.equal(crossSite.statusCode,403);assert.equal(crossSite.json().error.code,'CROSS_SITE_REQUEST');
+    for(const site of ['same-origin','none'])assert.equal((await search({host:'127.0.0.1:3000','sec-fetch-site':site})).statusCode,200,site);
+    // Following a link to the documentation from another site is ordinary browsing.
+    assert.equal((await app.inject({url:'/docs/',headers:{host:'127.0.0.1:3000','sec-fetch-site':'cross-site'}})).statusCode,200);
+  } finally {await app.close();}
 });
 test('HTTP responses keep field groups, record summaries and previous names (nothing stripped by the response schema)',async()=>{
   const field={key:'previousCompanyStatus',label:'Company status',value:'Removed (Effective from 11 March 2026 to 22 April 2026)',displayValue:'Removed (Effective from 11 March 2026 to 22 April 2026)',group:'Previous Statuses'};

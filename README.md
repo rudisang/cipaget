@@ -183,11 +183,13 @@ The browser process and healthy sessions are reused. Identical in-flight request
 
 One concurrent data request is the default, configurable up to four. Searches have their own lane with separate browser views and queue (`SEARCH_CONCURRENCY`, default 1), so a search never waits behind an entity read. A separate document worker handles one document request at a time. Each queue holds at most 20 pending distinct requests. Queue and operation deadlines are separate; operation timeout aborts and closes the affected browser pages. A timed-out task retains its slot until browser cleanup completes. An upstream rate limit or denial causes a 60-second service cooldown. Failed pages are discarded; healthy pages and their public asset cache can be reused.
 
-Error responses are `{ error: { code, message, retryable, requestId } }`. Typical codes: `INVALID_REQUEST` (400), `ENTITY_NOT_FOUND` (404), `ENTITY_AMBIGUOUS` (409), `RATE_LIMITED` (429), `UPSTREAM_LAYOUT_CHANGED` (502), `QUEUE_FULL` / `QUEUE_TIMEOUT` / `UPSTREAM_COOLDOWN` (503), and `UPSTREAM_TIMEOUT` / `OPERATION_TIMEOUT` (504). Do not automatically retry non-retryable errors; honour `Retry-After` when returned. No automatic retry storm is built into the adapter.
+Error responses are `{ error: { code, message, retryable, requestId } }`. Typical codes: `INVALID_REQUEST` (400), `UNAUTHORIZED` (401), `HOST_NOT_ALLOWED` / `CROSS_SITE_REQUEST` (403), `ENTITY_NOT_FOUND` (404), `ENTITY_AMBIGUOUS` (409), `RATE_LIMITED` (429), `UPSTREAM_LAYOUT_CHANGED` (502), `QUEUE_FULL` / `QUEUE_TIMEOUT` / `UPSTREAM_COOLDOWN` (503), and `UPSTREAM_TIMEOUT` / `OPERATION_TIMEOUT` (504). Do not automatically retry non-retryable errors; honour `Retry-After` when returned. No automatic retry storm is built into the adapter.
 
 ## Access and deployment
 
-The server binds to loopback by default. Set `API_KEY` before using a non-loopback `HOST`, and send `Authorization: Bearer <key>` to `/v1/` routes. Use TLS at your reverse proxy. CORS is not enabled. Logs contain route templates, status and duration, not company queries, returned personal data, or browser cookies.
+The server binds to loopback by default. Set `API_KEY` before using a non-loopback `HOST`, and send `Authorization: Bearer <key>` to `/v1/` routes. Use TLS at your reverse proxy. CORS is not enabled.
+
+A server without an API key is local-only: it answers requests whose `Host` is `localhost`, `127.0.0.1` or `[::1]`, plus any names listed in `ALLOWED_HOSTS`, and refuses the rest with `HOST_NOT_ALLOWED`. This stops a web page elsewhere from reaching it by pointing its own hostname at your machine. Lookups requested by a web page on another site are refused with `CROSS_SITE_REQUEST` whether or not a key is set. If you put a proxy in front of a keyless server, either set `API_KEY` or list the public hostname in `ALLOWED_HOSTS`. Logs contain route templates, status and duration, not company queries, returned personal data, or browser cookies.
 
 ```sh
 docker build -t cipaget .

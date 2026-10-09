@@ -6,7 +6,7 @@ import { readDocument, unavailableDocument } from './documents.js';
 import { checkPublicStatus, HybridUnsupported, loadHybridView, readPublicIdentity, resolvePublicViewLink, resetHybridSearch, submitHybridSearch } from './hybrid.js';
 import { PublicViewLinks } from './public-links.js';
 import { commandsOf, expectedClickCommand, matchesClick } from './ui-commands.js';
-import { cardLabel, headingIdentifies, isBusinessName } from './identifiers.js';
+import { cardLabel, headingIdentifies, isBusinessName, isBusinessNameRegister } from './identifiers.js';
 import type { RegistryDocument, DocumentKind, DocumentsResult, SearchItem } from './types.js';
 import { clean, fieldKey, mergeSection, parseSearch, parseSection, parseOwnershipStatements, deduplicateSearch } from './parser.js';
 import { ENTRY_URL, SECTION_LABELS, sectionKeyFor, type EntityOptions, type EntityResult, type RegistryProvider, type SearchOptions, type SearchResult, type Section } from './types.js';
@@ -441,7 +441,7 @@ export class CipaBrowser implements RegistryProvider {
       if (!match) throw new ApiError('ENTITY_NOT_FOUND', 'No public entity with this UIN was returned by CIPA.', 404);
       return match;
     }
-    const candidates = items.filter(item => item.uin === null && /^business names?$/i.test(item.register ?? ''));
+    const candidates = items.filter(item => item.uin === null && isBusinessNameRegister(item.register));
     if (!candidates.length) throw new ApiError('ENTITY_NOT_FOUND', 'No public business name with this registration number was returned by CIPA.', 404);
     if (candidates.length > 1) throw new ApiError('ENTITY_AMBIGUOUS', 'CIPA returned several business-name results for this registration number; refine with /v1/search.', 409);
     return candidates[0];

@@ -13,6 +13,8 @@ export function identifierKind(id: string): EntityKind | null {
   return null;
 }
 export const isBusinessName = (id: string): boolean => BUSINESS_NAME_NUMBER_PATTERN.test(id);
+/** The register a search card names for a business name. Such cards show no number at all. */
+export const isBusinessNameRegister = (register: string | null | undefined): boolean => /^business names?$/i.test(register ?? '');
 /** Accessible name of the public search-card link: companies append their UIN, business names do not. */
 export const cardLabel = (name: string, id: string): string => (isBusinessName(id) ? name : `${name} (${id})`);
 /** Whether a rendered level-1 heading identifies the requested entity. */

@@ -44,6 +44,10 @@ test('legacy business-name search results may omit both UIN and entity subtype',
   const r=parseSearch('<div class="search-result"><a class="searchView">Example Shop</a><div class="tokenized-line"><span class="token">Removed / Cancelled</span><span class="token">Business names</span><span class="token">Registered on 17 June 2010</span></div><span class="dd value"></span></div>');
   assert.equal(r.items[0].uin,null);assert.equal(r.items[0].entityType,null);assert.equal(r.items[0].registeredOn,'2010-06-17');assert.equal(r.items[0].address,null);
 });
+test('a business name whose own name ends in a company number is not reported as that company',()=>{
+  const r=parseSearch('<div class="search-result"><a class="searchView">Example Shop (BW00000123456)</a><div class="tokenized-line"><span class="token">Registered</span><span class="token">Business Names</span><span class="token">Registered on 03 June 2019</span></div></div>').items[0];
+  assert.equal(r.uin,null);assert.equal(r.name,'Example Shop (BW00000123456)');
+});
 test('overlapping source pages are deduplicated without merging distinct unnumbered entities',()=>{
   const item=parseSearch('<div class="search-result"><a class="searchView">Example Shop</a></div>').items[0];
   assert.equal(deduplicateSearch([item,item,{...item,address:'Different office'}]).length,2);

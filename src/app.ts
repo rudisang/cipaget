@@ -15,6 +15,10 @@ const ENTITY_ID_PATTERN='^(?:[Bb][Ww][0-9]{5,20}|[Bb][Nn][0-9]{4}/[0-9]{1,10})$'
 const GUIDE_URL=new URL('../docs/index.html',import.meta.url);
 // The guide shows registry text and calls only this server; it loads nothing from anywhere else.
 const GUIDE_CSP="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+// Names a server with no API key may be addressed by; ALLOWED_HOSTS adds to them.
+const LOCAL_HOSTS=['localhost','127.0.0.1','[::1]'];
+/** The hostname of a Host header, without its port. IPv6 literals keep their brackets. */
+const hostName=(header: string | undefined): string => { const value=(header ?? '').trim().toLowerCase(); return value.startsWith('[') ? value.slice(0,value.indexOf(']')+1) : value.split(':')[0]; };
 const ENTITY_ID_DESCRIPTION='A company UIN (BW followed by 5 to 20 digits), or a business-name registration number (BN, the year, a slash and a number) with the slash written as %2F.';
 export async function buildApp(config: Config = loadConfig(), provider?: RegistryProvider) {
   const guide = await readFile(GUIDE_URL).catch(() => null);
@@ -28,7 +32,14 @@ export async function buildApp(config: Config = loadConfig(), provider?: Registr
   for (const schema of schemas) app.addSchema(schema);
   app.addHook('onRequest', async (request, reply) => {
     reply.header('Cache-Control','no-store');
-    if (!config.apiKey || !request.url.startsWith('/v1/')) return;
+    // With no key the server is local-only. A page elsewhere can point its own hostname at this
+    // machine (DNS rebinding) and would then read answers as if it were local, so the name must match.
+    if (!config.apiKey && ![...LOCAL_HOSTS,...config.allowedHosts].includes(hostName(request.headers.host))) throw new ApiError('HOST_NOT_ALLOWED','This server has no API key, so it only answers requests addressed to localhost. Set API_KEY, or add the hostname to ALLOWED_HOSTS.',403);
+    // Decide by the matched route, not the raw URL: the router decodes percent-encoding, so /%76%31/search is /v1/search.
+    if (!request.routeOptions.url?.startsWith('/v1/')) return;
+    // A lookup makes this server contact CIPA, so a page on another site must not be able to start one.
+    if (request.headers['sec-fetch-site'] === 'cross-site') throw new ApiError('CROSS_SITE_REQUEST','Requests from web pages on other sites are not accepted.',403);
+    if (!config.apiKey) return;
     const supplied = Buffer.from(request.headers.authorization ?? ''), expected = Buffer.from(`Bearer ${config.apiKey}`);
     if (supplied.length !== expected.length || !timingSafeEqual(supplied,expected)) throw new ApiError('UNAUTHORIZED','A valid Bearer API key is required.',401);
   });
